@@ -1,0 +1,21 @@
+# Source files – compiled into out/
+src/
+tsconfig.json
+
+# Build tooling – not needed at runtime
+scripts/
+media/vendor/hljs-entry.cjs
+package-lock.json
+
+# Source maps – not needed by end users
+out/**/*.map
+
+# npm packages – everything is bundled into media/vendor/highlight.min.js
+node_modules/
+
+# Dev / test files
+test/
+docs/
+.vscode/
+.DS_Store
+.idea/

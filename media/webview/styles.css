@@ -1,0 +1,353 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Merge Easy – stylesheet
+   Brand palette:
+     LOCAL (blue)    #43698D  →  bg #0d1e2e  →  word-highlight #243d5a
+     REMOTE (green)  #447152  →  bg #0d1e11  →  word-highlight #1e3d27
+     CONFLICT (red)  #8F5247  →  bg #251510
+     DELETED         #B63B50  →  bg #2d0e15
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--vscode-font-family, system-ui, sans-serif);
+  font-size: 13px;
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #d4d4d4);
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: #252525;
+  border-bottom: 1px solid #111;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+#file-info  { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+#file-name  { font-weight:600; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#ccc; }
+.badge      { padding:1px 8px; border-radius:10px; font-size:11px; font-weight:600; white-space:nowrap; }
+.badge.warn { background:#3a1a10; color:#e07040; }
+.badge.ok   { background:#0d2a12; color:#5cd65c; }
+#nav-controls          { display:flex; align-items:center; gap:5px; }
+#nav-label             { font-size:11px; min-width:44px; text-align:center; color:#777; }
+#action-controls       { display:flex; gap:5px; flex-wrap:wrap; }
+.keyboard-hints        { font-size:10px; color:#484848; white-space:nowrap; }
+
+button {
+  padding: 3px 9px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.07);
+  color: #bbb;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+button:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
+button:disabled { opacity:.35; cursor:default; }
+button.primary  { background:#0e639c; color:#fff; font-weight:600; border-color:transparent; }
+button.primary:hover { background:#1177bb; }
+
+/* ── 3-panel flex layout ─────────────────────────────────────────────────── */
+#app { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+
+#panels-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  position: relative; /* needed for absolute SVG connectors */
+}
+
+.col-ours, .col-result, .col-theirs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* connector divs – narrow strip between panels */
+.col-connector {
+  width: 28px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  background: #161616;
+}
+.col-connector svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 28px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ── Column headers ──────────────────────────────────────────────────────── */
+.col-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  flex-shrink: 0;
+  border-bottom: 2px solid;
+  gap: 6px;
+}
+.panel-label { font-size:11px; }
+.panel-sub   { font-weight:400; opacity:.6; text-transform:none; letter-spacing:0; margin-left:auto; font-size:10px; }
+
+.ours-header   { background:#0b1822; border-color:#43698D; color:#6aa3d0; }
+.result-header { background:#1a1a1a; border-color:#3a3a3a; color:#888; }
+.theirs-header { background:#0b1a0e; border-color:#447152; color:#64a572; }
+
+.col-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.col-content::-webkit-scrollbar       { width:7px; }
+.col-content::-webkit-scrollbar-track { background:transparent; }
+.col-content::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.13); border-radius:4px; }
+.col-content::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.22); }
+
+/* ── Code + gutter ───────────────────────────────────────────────────────── */
+.code-with-gutter {
+  display: flex;
+  align-items: flex-start;
+}
+.line-gutter {
+  width: 38px;
+  min-width: 38px;
+  text-align: right;
+  padding: 0 6px 0 4px;
+  color: #3a3a3a;
+  font-family: var(--vscode-editor-font-family,'Menlo','Courier New',monospace);
+  font-size: 11px;
+  line-height: 1.55;
+  user-select: none;
+  white-space: pre;
+  background: rgba(0,0,0,0.2);
+  border-right: 1px solid #252525;
+  flex-shrink: 0;
+}
+
+pre.code-block {
+  font-family: var(--vscode-editor-font-family,'Menlo','Courier New',monospace);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  flex: 1;
+  padding: 0 6px;
+  min-width: 0;
+}
+pre.code-block.hljs          { background:transparent !important; padding:0 6px !important; }
+pre.code-block.highlightable { background:transparent; }
+
+/* ── Context sections ────────────────────────────────────────────────────── */
+.context-section { }
+.context-section .line-gutter { color:#2d2d2d; }
+.context-section pre.code-block { color:#606060; }
+#panels-container.hide-context .context-section { display:none; }
+
+/* ── Conflict blocks ─────────────────────────────────────────────────────── */
+.conflict-block {
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  padding: 3px 0;
+  position: relative;
+  transition: filter 0.1s;
+}
+.conflict-block:hover  { filter: brightness(1.18); }
+.conflict-block.active { filter: brightness(1.35); }
+.conflict-block.resolved { opacity: 0.6; }
+
+/* LOCAL – blue */
+.nc-ours        { background:#0d1e2e; border-left-color:#43698D; }
+.nc-ours.active { background:#142840; border-left-color:#6aa3d0; }
+
+/* LOCAL neutral (non-conflicting, other side changed) */
+.nc-neutral { background:transparent; border-left-color:#2a2a2a; }
+
+/* REMOTE – green */
+.nc-theirs        { background:#0d1e11; border-left-color:#447152; }
+.nc-theirs.active { background:#122818; border-left-color:#64a572; }
+
+/* RESULT: true conflict unresolved – purple (Kollision) */
+.nc-result-conflict        { background:#1e1028; border-left-color:#7a4a9a; }
+.nc-result-conflict.active { background:#2a1838; border-left-color:#a06ac0; }
+
+/* RESULT: non-conflicting LOCAL – blue (same as LOCAL) */
+.nc-result-ours        { background:#0d1e2e; border-left-color:#43698D; }
+.nc-result-ours.active { background:#142840; border-left-color:#6aa3d0; }
+
+/* RESULT: non-conflicting REMOTE – green (same as REMOTE) */
+.nc-result-theirs        { background:#0d1e11; border-left-color:#447152; }
+.nc-result-theirs.active { background:#122818; border-left-color:#64a572; }
+
+/* RESULT: resolved – barely visible, just slightly above editor background */
+.nc-result-resolved        { background:#252525; border-left-color:#383838; }
+.nc-result-resolved.active { background:#2c2c2c; border-left-color:#484848; }
+
+
+/* ── RESULT center — per-row colouring (colours never overlap) ──────────── */
+
+/* KOLLISION: both sides changed the same line (replace row) → PURPLE */
+.code-line.line-result-conflict {
+  background: #1e1028;
+  color: #c0a0d8;
+}
+/* LOCAL version of the collision (top line of the pair) */
+.code-line.line-result-conflict-ours   .word-changed { background: #4a2a6a; border-radius: 2px; }
+/* REMOTE version of the collision (bottom line of the pair) */
+.code-line.line-result-conflict-theirs .word-changed { background: #5a1a5a; border-radius: 2px; }
+/* Visual separator between LOCAL and REMOTE conflict lines */
+.code-line.line-result-conflict-ours   { border-bottom: 1px dashed rgba(160, 106, 192, 0.3); }
+
+/* LOCAL addition (ours-only): LOCAL has it, REMOTE doesn't → BLUE */
+.code-line.line-result-ours { background: #0d1e2e; color: #6aa3d0; }
+
+/* DELETED (theirs-only): REMOTE has it, LOCAL doesn't → will be deleted → RED */
+.code-line.line-result-deleted {
+  background: #200c0c;
+  color: #a06060;
+  border-left: 2px solid rgba(182, 59, 80, 0.7);
+}
+
+/* ── Word-level diff highlighting ────────────────────────────────────────── */
+/* Code lines container (when word diff is active) */
+.code-lines-container {
+  flex: 1;
+  font-family: var(--vscode-editor-font-family,'Menlo','Courier New',monospace);
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 0 6px;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.code-line {
+  white-space: pre-wrap;
+  display: block;
+}
+
+/* equal line → dim (same as context) */
+.code-line.line-equal { color: #606060; }
+
+/* modified line: highlight changed tokens */
+.code-line.line-modified { color: #c8c8c8; }
+.nc-ours   .code-line.line-modified .word-changed { background:#243d5a; border-radius:2px; }
+.nc-theirs .code-line.line-modified .word-changed { background:#1e3d27; border-radius:2px; }
+
+/* ── Divider / preview in RESULT ─────────────────────────────────────────── */
+.conflict-divider {
+  text-align:center; font-size:10px; color:#444;
+  border-top:1px dashed #2a2a2a; border-bottom:1px dashed #2a2a2a;
+  padding:1px 0; margin:1px 0;
+}
+
+/* RESULT panel – ours preview section (blue tint, mirrors LOCAL) */
+.result-preview-ours-section .code-line               { color:#3a6a9a; font-size:11px; }
+.result-preview-ours-section .code-line.line-equal    { color:#243a52; }
+.result-preview-ours-section .code-line.line-modified { color:#5a8ab8; }
+.result-preview-ours-section .code-line.line-modified .word-changed { background:#243d5a; border-radius:2px; }
+
+/* RESULT panel – theirs preview section (green tint, mirrors REMOTE) */
+.result-preview-theirs-section .code-line               { color:#3a7a50; font-size:11px; }
+.result-preview-theirs-section .code-line.line-equal    { color:#1e3d27; }
+.result-preview-theirs-section .code-line.line-modified { color:#56a070; }
+.result-preview-theirs-section .code-line.line-modified .word-changed { background:#1e3d27; border-radius:2px; }
+
+/* ── Arrow / action buttons ──────────────────────────────────────────────── */
+.block-actions    { display:flex; gap:3px; padding:3px 8px; }
+.right-actions    { justify-content:flex-end; }
+.left-actions     { justify-content:flex-start; }
+
+.arrow-btn {
+  font-size: 13px;
+  padding: 1px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.1s, transform 0.08s;
+}
+.arrow-btn:hover { background:rgba(255,255,255,0.13); transform:scale(1.08); }
+.btn-accept-ours   { color:#6aa3d0; border-color:#43698D; }
+.btn-accept-theirs { color:#64a572; border-color:#447152; }
+.btn-both          { color:#888; font-size:11px; }
+.btn-undo          { color:#c08040; font-size:12px; }
+
+/* ── RESULT editable ─────────────────────────────────────────────────────── */
+.result-edit-wrap {
+  padding: 0 6px;
+  position: relative;
+}
+
+pre.result-editable {
+  color: #ccc;
+  background: transparent;
+  outline: none;
+  caret-color: #fff;
+  cursor: text;
+  border-radius: 3px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  transition: box-shadow 0.15s, background 0.15s;
+  font-family: var(--vscode-editor-font-family,'Menlo','Courier New',monospace);
+  font-size: 12px;
+  line-height: 1.55;
+  border: 1px solid transparent;
+  padding: 2px 4px;
+  min-height: 1.55em;
+}
+pre.result-editable:hover:not(:focus) {
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.025);
+}
+pre.result-editable:focus {
+  box-shadow: 0 0 0 1px #5a8a5a;
+  background: rgba(255,255,255,0.03);
+  border-color: #447152;
+}
+
+/* edit-mode indicator strip on the left */
+.result-edit-wrap::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 2px; bottom: 2px;
+  width: 2px;
+  background: transparent;
+  border-radius: 1px;
+  transition: background 0.15s;
+}
+.result-edit-wrap:focus-within::before { background: #447152; }
+
+/* ✎ edit hint – always visible on resolved blocks, dims when not focused */
+.edit-hint {
+  font-size: 10px;
+  color: #3a3a3a;
+  padding: 1px 8px 3px;
+  pointer-events: none;
+  transition: color 0.15s;
+  user-select: none;
+}
+.conflict-block:hover  .edit-hint         { color: #585858; }
+.result-edit-wrap:focus-within ~ .edit-hint { color: #64a572 !important; }
+
+.result-badge { font-size:10px; color:#5a8060; opacity:.9; padding:2px 8px 0; }
+
+.empty-placeholder { font-size:11px; color:#383838; font-style:italic; padding:3px 46px; }

@@ -1,0 +1,78 @@
+{
+  "name": "merge-easy",
+  "displayName": "Merge Easy",
+  "description": "IntelliJ-style 3-panel merge conflict editor with syntax highlighting, word-level diff, and connector ribbons.",
+  "version": "0.2.0",
+  "publisher": "futurecode",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/futurecode-de/merge-easy"
+  },
+  "keywords": [
+    "git",
+    "merge",
+    "conflict",
+    "diff",
+    "3-way"
+  ],
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "SCM Providers"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "intellij-merge.openMergeEditor",
+        "title": "%command.openMergeEditor%",
+        "icon": "$(git-merge)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "intellij-merge.openMergeEditor",
+          "when": "resourceScheme == file",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "intellij-merge.openMergeEditor",
+          "when": "resourceScheme == file",
+          "group": "1_modification"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "intellij-merge.openMergeEditor",
+          "when": "resourceScheme == file",
+          "group": "1_modification"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.74.0",
+    "highlight.js": "^11.11.1",
+    "typescript": "^5.0.0",
+    "webpack": "^5.106.2",
+    "webpack-cli": "^7.0.2"
+  },
+  "dependencies": {
+    "vsce": "^2.15.0"
+  }
+}
