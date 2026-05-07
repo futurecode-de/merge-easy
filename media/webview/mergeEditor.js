@@ -155,9 +155,12 @@
   function navigate(dir) {
     if (!state || !state.hunks.length) { return; }
     const next = Math.max(0, Math.min(state.hunks.length - 1, activeIndex + dir));
-    if (next === activeIndex) { return; }
-    activeIndex = next;
-    render();
+    if (next !== activeIndex) {
+      activeIndex = next;
+      render();
+    }
+    // Scroll to the (possibly unchanged) active block so single-conflict files
+    // still respond to next/prev with a visible jump.
     scrollToActive();
   }
 
@@ -556,8 +559,8 @@
 
     elNavLabel.textContent = state.hunks.length
       ? `${activeIndex + 1} / ${state.hunks.length}` : '–';
-    elBtnPrev.disabled = activeIndex <= 0;
-    elBtnNext.disabled = activeIndex >= state.hunks.length - 1;
+    elBtnPrev.disabled = state.hunks.length === 0;
+    elBtnNext.disabled = state.hunks.length === 0;
 
     elOurs.innerHTML   = '';
     elResult.innerHTML = '';
