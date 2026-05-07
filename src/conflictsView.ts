@@ -28,6 +28,7 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
   private readonly _gitWatchers: vscode.Disposable[] = [];
   private readonly _knownRepos = new WeakSet<object>();
   private _apiSubscribed = false;
+  private _refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     // Fire-and-forget async init: subscribe to the vscode.git API for live
@@ -37,11 +38,23 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
   }
 
   refresh(): void {
-    void this._subscribeToGit(); // catch newly opened repositories
-    this._onDidChangeTreeData.fire();
+    // Debounce: vscode.git's onDidChange fires on every working-tree change,
+    // and so do user-triggered refresh-button clicks during quick succession.
+    // Collapse a burst into a single getChildren round-trip (which spawns git
+    // subprocesses), keeping the loading bar from blinking continuously.
+    if (this._refreshTimer !== undefined) { clearTimeout(this._refreshTimer); }
+    this._refreshTimer = setTimeout(() => {
+      this._refreshTimer = undefined;
+      void this._subscribeToGit(); // catch newly opened repositories
+      this._onDidChangeTreeData.fire();
+    }, 250);
   }
 
   dispose(): void {
+    if (this._refreshTimer !== undefined) {
+      clearTimeout(this._refreshTimer);
+      this._refreshTimer = undefined;
+    }
     this._gitWatchers.forEach(d => d.dispose());
     this._gitWatchers.length = 0;
   }

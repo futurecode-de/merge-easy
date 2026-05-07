@@ -198,14 +198,6 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Refresh the view when files in the workspace change (catches edits that
-  // resolve conflicts outside of git's awareness — e.g. saved without `git add`).
-  const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*');
-  fsWatcher.onDidChange(() => conflictsProvider.refresh());
-  fsWatcher.onDidCreate(() => conflictsProvider.refresh());
-  fsWatcher.onDidDelete(() => conflictsProvider.refresh());
-  context.subscriptions.push(fsWatcher);
-
   // ── Run checks on the file that is already open at activation time ────────
   updateStatusBar(vscode.window.activeTextEditor);
 }
