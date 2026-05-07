@@ -198,6 +198,19 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // Narrow refresh trigger: only the git internal-state files. These change
+  // when a merge starts/ends, when `git add` is run, and on commit — exactly
+  // when the conflicts list could differ. Far quieter than a workspace-wide
+  // watcher, and catches updates from external terminals that the vscode.git
+  // API may not surface promptly.
+  const gitStateWatcher = vscode.workspace.createFileSystemWatcher(
+    '**/.git/{index,HEAD,MERGE_HEAD,COMMIT_EDITMSG,FETCH_HEAD}'
+  );
+  gitStateWatcher.onDidChange(() => conflictsProvider.refresh());
+  gitStateWatcher.onDidCreate(() => conflictsProvider.refresh());
+  gitStateWatcher.onDidDelete(() => conflictsProvider.refresh());
+  context.subscriptions.push(gitStateWatcher);
+
   // ── Run checks on the file that is already open at activation time ────────
   updateStatusBar(vscode.window.activeTextEditor);
 }
