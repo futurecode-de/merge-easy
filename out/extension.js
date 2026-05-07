@@ -51,6 +51,7 @@ const fs = __importStar(require("fs"));
 const conflictParser_1 = require("./conflictParser");
 const mergePanel_1 = require("./mergePanel");
 const i18n_1 = require("./i18n");
+const conflictsView_1 = require("./conflictsView");
 // Track which files we've already shown the one-time notification for
 const shownNotifications = new Set();
 function activate(context) {
@@ -60,6 +61,18 @@ function activate(context) {
         const fileUri = uri ?? vscode.window.activeTextEditor?.document.uri;
         if (!fileUri || fileUri.scheme !== 'file') {
             vscode.window.showWarningMessage('Please open a file first.');
+            return;
+        }
+        let stat;
+        try {
+            stat = fs.statSync(fileUri.fsPath);
+        }
+        catch {
+            vscode.window.showWarningMessage(`Cannot access: ${fileUri.fsPath}`);
+            return;
+        }
+        if (!stat.isFile()) {
+            vscode.window.showWarningMessage(i18n['warn.notAFile'] ?? 'Please select a file, not a folder.');
             return;
         }
         const content = fs.readFileSync(fileUri.fsPath, 'utf8');
@@ -158,6 +171,36 @@ function activate(context) {
             mergePanel_1.MergePanel.createOrShow(context, editor.document.uri, parsed);
         }
     }));
+    // ── 5. Activity-Bar sidebar: list of files with merge conflicts ──────────
+    const conflictsProvider = new conflictsView_1.ConflictsViewProvider(context);
+    const conflictsTreeView = vscode.window.createTreeView('mergeEasy.conflictsView', {
+        treeDataProvider: conflictsProvider,
+        showCollapseAll: false,
+    });
+    context.subscriptions.push(conflictsTreeView);
+    context.subscriptions.push({ dispose: () => conflictsProvider.dispose() });
+    context.subscriptions.push(vscode.commands.registerCommand('mergeEasy.refreshConflicts', () => {
+        conflictsProvider.refresh();
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('mergeEasy.openFileManual', async () => {
+        const picks = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false,
+            openLabel: 'Open in Merge Easy',
+        });
+        if (!picks || picks.length === 0) {
+            return;
+        }
+        await vscode.commands.executeCommand('intellij-merge.openMergeEditor', picks[0]);
+    }));
+    // Refresh the view when files in the workspace change (catches edits that
+    // resolve conflicts outside of git's awareness — e.g. saved without `git add`).
+    const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*');
+    fsWatcher.onDidChange(() => conflictsProvider.refresh());
+    fsWatcher.onDidCreate(() => conflictsProvider.refresh());
+    fsWatcher.onDidDelete(() => conflictsProvider.refresh());
+    context.subscriptions.push(fsWatcher);
     // ── Run checks on the file that is already open at activation time ────────
     updateStatusBar(vscode.window.activeTextEditor);
 }
