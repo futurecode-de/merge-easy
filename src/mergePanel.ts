@@ -298,6 +298,8 @@ export class MergePanel {
         <button id="btn-next" title="Next conflict (Alt+↓)">&#9660;</button>
       </div>
       <div id="action-controls">
+        <button id="btn-accept-all-local" title="${this._i18n['btn.acceptAllLocal.tooltip'] ?? 'Accept LOCAL for all unresolved conflicts'}">${this._i18n['btn.acceptAllLocal'] ?? '\u2190 All LOCAL'}</button>
+        <button id="btn-accept-all-remote" title="${this._i18n['btn.acceptAllRemote.tooltip'] ?? 'Accept REMOTE for all unresolved conflicts'}">${this._i18n['btn.acceptAllRemote'] ?? 'All REMOTE \u2192'}</button>
         <button id="btn-toggle-context">${this._i18n['btn.hideContext'] ?? '\u229f Hide context'}</button>
         <button id="btn-apply-nonconflicting">${this._i18n['btn.nonConflicting'] ?? '\u26a1 Non-conflicting'}</button>
         <button id="btn-apply" class="primary">${this._i18n['btn.applyMerge'] ?? '\u2713 Apply Merge'}</button>

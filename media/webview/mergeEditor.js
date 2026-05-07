@@ -37,6 +37,8 @@
   const elBtnPrev     = $('btn-prev');
   const elBtnNext     = $('btn-next');
   const elBtnNonConf  = $('btn-apply-nonconflicting');
+  const elBtnAcceptAllLocal  = $('btn-accept-all-local');
+  const elBtnAcceptAllRemote = $('btn-accept-all-remote');
   const elBtnApply    = $('btn-apply');
   const elBtnToggle   = $('btn-toggle-context');
   const elLabelOurs   = $('label-ours');
@@ -131,6 +133,20 @@
       if (h.resolved) { return; }
       if (h.ours.length === 0 && h.theirs.length > 0) { sendResolve(i, { kind: 'theirs' }); }
       else if (h.theirs.length === 0 && h.ours.length > 0) { sendResolve(i, { kind: 'ours' }); }
+    });
+  });
+
+  elBtnAcceptAllLocal.addEventListener('click', () => {
+    if (!state) { return; }
+    state.hunks.forEach((h, i) => {
+      if (!h.resolved && h.ours.length > 0) { sendResolve(i, { kind: 'ours' }); }
+    });
+  });
+
+  elBtnAcceptAllRemote.addEventListener('click', () => {
+    if (!state) { return; }
+    state.hunks.forEach((h, i) => {
+      if (!h.resolved && h.theirs.length > 0) { sendResolve(i, { kind: 'theirs' }); }
     });
   });
 
@@ -561,6 +577,10 @@
       ? `${activeIndex + 1} / ${state.hunks.length}` : '–';
     elBtnPrev.disabled = state.hunks.length === 0;
     elBtnNext.disabled = state.hunks.length === 0;
+
+    const anyUnresolved = state.hunks.some(h => !h.resolved);
+    elBtnAcceptAllLocal.disabled  = !anyUnresolved;
+    elBtnAcceptAllRemote.disabled = !anyUnresolved;
 
     elOurs.innerHTML   = '';
     elResult.innerHTML = '';
