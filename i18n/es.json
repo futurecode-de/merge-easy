@@ -45,5 +45,8 @@
   "btn.commit": "Fusionar",
   "btn.editMessage": "Editar mensaje…",
   "prompt.editMessage": "Mensaje del commit",
-  "warn.emptyMessage": "El mensaje del commit no puede estar vacío."
+  "warn.emptyMessage": "El mensaje del commit no puede estar vacío.",
+  "dialog.commitMerge.title": "Fusionar commit",
+  "dialog.commitMerge.branches": "Fusionando '{from}' en '{into}'",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Enter para confirmar · Esc para cancelar"
 }

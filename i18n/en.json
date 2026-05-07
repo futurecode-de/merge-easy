@@ -45,5 +45,8 @@
   "btn.commit": "Commit",
   "btn.editMessage": "Edit message…",
   "prompt.editMessage": "Commit message",
-  "warn.emptyMessage": "Commit message cannot be empty."
+  "warn.emptyMessage": "Commit message cannot be empty.",
+  "dialog.commitMerge.title": "Commit Merge",
+  "dialog.commitMerge.branches": "Merging '{from}' into '{into}'",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Enter to commit · Esc to cancel"
 }

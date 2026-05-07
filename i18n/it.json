@@ -45,5 +45,8 @@
   "btn.commit": "Unisci",
   "btn.editMessage": "Modifica messaggio…",
   "prompt.editMessage": "Messaggio del commit",
-  "warn.emptyMessage": "Il messaggio del commit non può essere vuoto."
+  "warn.emptyMessage": "Il messaggio del commit non può essere vuoto.",
+  "dialog.commitMerge.title": "Conferma merge",
+  "dialog.commitMerge.branches": "Unione di '{from}' in '{into}'",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Invio per confermare · Esc per annullare"
 }

@@ -45,5 +45,8 @@
   "btn.commit": "Mesclar",
   "btn.editMessage": "Editar mensagem…",
   "prompt.editMessage": "Mensagem do commit",
-  "warn.emptyMessage": "A mensagem do commit não pode estar vazia."
+  "warn.emptyMessage": "A mensagem do commit não pode estar vazia.",
+  "dialog.commitMerge.title": "Confirmar mesclagem",
+  "dialog.commitMerge.branches": "Mesclando '{from}' em '{into}'",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Enter para confirmar · Esc para cancelar"
 }

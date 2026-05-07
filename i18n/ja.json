@@ -45,5 +45,8 @@
   "btn.commit": "マージ",
   "btn.editMessage": "メッセージを編集…",
   "prompt.editMessage": "コミットメッセージ",
-  "warn.emptyMessage": "コミットメッセージは空にできません。"
+  "warn.emptyMessage": "コミットメッセージは空にできません。",
+  "dialog.commitMerge.title": "マージをコミット",
+  "dialog.commitMerge.branches": "'{from}' を '{into}' にマージします",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Enter でコミット · Esc でキャンセル"
 }

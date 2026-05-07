@@ -45,5 +45,8 @@
   "btn.commit": "合併",
   "btn.editMessage": "編輯訊息…",
   "prompt.editMessage": "提交訊息",
-  "warn.emptyMessage": "提交訊息不能為空。"
+  "warn.emptyMessage": "提交訊息不能為空。",
+  "dialog.commitMerge.title": "提交合併",
+  "dialog.commitMerge.branches": "將 '{from}' 合併到 '{into}'",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Enter 提交 · Esc 取消"
 }

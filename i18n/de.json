@@ -45,5 +45,8 @@
   "btn.commit": "Mergen",
   "btn.editMessage": "Nachricht bearbeiten…",
   "prompt.editMessage": "Commit-Nachricht",
-  "warn.emptyMessage": "Commit-Nachricht darf nicht leer sein."
+  "warn.emptyMessage": "Commit-Nachricht darf nicht leer sein.",
+  "dialog.commitMerge.title": "Merge committen",
+  "dialog.commitMerge.branches": "'{from}' wird in '{into}' gemergt",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Enter zum Committen · Esc zum Abbrechen"
 }

@@ -45,5 +45,8 @@
   "btn.commit": "Fusionner",
   "btn.editMessage": "Modifier le message…",
   "prompt.editMessage": "Message du commit",
-  "warn.emptyMessage": "Le message du commit ne peut pas être vide."
+  "warn.emptyMessage": "Le message du commit ne peut pas être vide.",
+  "dialog.commitMerge.title": "Valider la fusion",
+  "dialog.commitMerge.branches": "Fusion de '{from}' dans '{into}'",
+  "dialog.commitMerge.hint": "Cmd/Ctrl+Entrée pour valider · Échap pour annuler"
 }

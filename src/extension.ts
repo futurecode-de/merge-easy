@@ -18,6 +18,7 @@ import { MergePanel } from './mergePanel';
 import { getI18n, ti } from './i18n';
 import { ConflictsViewProvider } from './conflictsView';
 import { commitMerge, commitMergeWithMessage, findRepoRoot, getGitInfo } from './gitHelper';
+import { showCommitMessageDialog } from './commitDialog';
 
 // Track which files we've already shown the one-time notification for
 const shownNotifications = new Set<string>();
@@ -241,20 +242,27 @@ export function activate(context: vscode.ExtensionContext): void {
 
       let customMessage: string | undefined;
       if (choice === btnEdit) {
-        // Pre-fill with the first line of git's prepared MERGE_MSG.
+        // Pre-fill with the full prepared MERGE_MSG (multi-line preserved).
         const mergeMsgPath = path.join(mergingRepo, '.git', 'MERGE_MSG');
         let prefilled = `Merge branch '${fromBranch}' into ${intoBranch}`;
         try {
           const content = fs.readFileSync(mergeMsgPath, 'utf8').trim();
-          const firstLine = content.split('\n').find(l => l.trim().length > 0);
-          if (firstLine) { prefilled = firstLine; }
+          if (content) { prefilled = content; }
         } catch { /* keep default */ }
 
-        const message = await vscode.window.showInputBox({
-          prompt: i18n['prompt.editMessage'] ?? 'Commit message',
-          value: prefilled,
+        const branchesLabel = ti(i18n, 'dialog.commitMerge.branches', {
+          from: fromBranch, into: intoBranch,
         });
-        if (message === undefined) { return; } // user cancelled the input
+        const message = await showCommitMessageDialog({
+          title:         i18n['dialog.commitMerge.title']  ?? 'Commit Merge',
+          branchesLabel,
+          prompt:        i18n['prompt.editMessage']        ?? 'Commit message',
+          prefilled,
+          okLabel:       btnCommit,
+          cancelLabel:   i18n['warn.cancel']               ?? 'Cancel',
+          hintLabel:     i18n['dialog.commitMerge.hint']   ?? 'Cmd/Ctrl+Enter to commit, Esc to cancel',
+        });
+        if (message === undefined) { return; } // dialog cancelled or closed
         if (message.trim().length === 0) {
           vscode.window.showWarningMessage(
             i18n['warn.emptyMessage'] ?? 'Commit message cannot be empty.'
