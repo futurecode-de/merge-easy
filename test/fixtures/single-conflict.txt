@@ -1,0 +1,11 @@
+function greet(name) {
+  console.log("Hello, " + name);
+}
+
+<<<<<<< HEAD
+const greeting = "Hi there";
+=======
+const greeting = "Welcome";
+>>>>>>> feature-branch
+
+greet("World");

@@ -1,0 +1,26 @@
+<!-- (c) 2026 FUTURE[code] - Markus Feilen
+     Activity-bar icon. Monochrome variant of the marketplace icon:
+     same 3-panel composition (LOCAL · RESULT · REMOTE) but using
+     currentColor with opacity variation so VSCode can theme it. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"
+     fill="currentColor">
+  <!-- Rounded frame (stroke instead of fill so VSCode's themed bg shows through) -->
+  <rect x="5" y="5" width="118" height="118" rx="20"
+        fill="none" stroke="currentColor" stroke-width="9" opacity="1"/>
+  <!-- Inner content scaled to 76% and recentered, so the bars sit comfortably inside the thicker frame -->
+  <g transform="translate(15.5,15.5) scale(0.76)">
+    <!-- LOCAL panel -->
+    <rect width="28" height="92" x="7"  y="18" rx="5" opacity=".55"/>
+    <rect width="28" height="22" x="7"  y="38"        opacity="1"/>
+    <!-- RESULT panel -->
+    <rect width="28" height="92" x="50" y="18" rx="5" opacity=".4"/>
+    <rect width="28" height="22" x="50" y="38"        opacity=".95"/>
+    <rect width="28" height="16" x="50" y="68"        opacity=".75"/>
+    <!-- REMOTE panel -->
+    <rect width="28" height="92" x="93" y="18" rx="5" opacity=".55"/>
+    <rect width="28" height="16" x="93" y="68"        opacity="1"/>
+    <!-- Connector ribbons -->
+    <path d="M35 38h15v22H35Z" opacity=".3"/>
+    <path d="M78 68h15v16H78Z" opacity=".3"/>
+  </g>
+</svg>

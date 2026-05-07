@@ -12,9 +12,13 @@
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as path from 'path';
 import { parseConflicts } from './conflictParser';
 import { MergePanel } from './mergePanel';
-import { getI18n } from './i18n';
+import { getI18n, ti } from './i18n';
+import { ConflictsViewProvider } from './conflictsView';
+import { commitMerge, commitMergeWithMessage, findRepoRoot, getGitInfo } from './gitHelper';
+import { showCommitMessageDialog } from './commitDialog';
 
 // Track which files we've already shown the one-time notification for
 const shownNotifications = new Set<string>();
@@ -31,6 +35,20 @@ export function activate(context: vscode.ExtensionContext): void {
 
       if (!fileUri || fileUri.scheme !== 'file') {
         vscode.window.showWarningMessage('Please open a file first.');
+        return;
+      }
+
+      let stat: fs.Stats;
+      try {
+        stat = fs.statSync(fileUri.fsPath);
+      } catch {
+        vscode.window.showWarningMessage(`Cannot access: ${fileUri.fsPath}`);
+        return;
+      }
+      if (!stat.isFile()) {
+        vscode.window.showWarningMessage(
+          i18n['warn.notAFile'] ?? 'Please select a file, not a folder.'
+        );
         return;
       }
 
@@ -154,6 +172,136 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     })
   );
+
+  // ── 5. Activity-Bar sidebar: list of files with merge conflicts ──────────
+  const conflictsProvider = new ConflictsViewProvider();
+  const conflictsTreeView = vscode.window.createTreeView('mergeEasy.conflictsView', {
+    treeDataProvider: conflictsProvider,
+    showCollapseAll: false,
+  });
+  context.subscriptions.push(conflictsTreeView);
+  context.subscriptions.push({ dispose: () => conflictsProvider.dispose() });
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mergeEasy.refreshConflicts', () => {
+      conflictsProvider.refresh();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mergeEasy.openFileManual', async () => {
+      const picks = await vscode.window.showOpenDialog({
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false,
+        openLabel: 'Open in Merge Easy',
+      });
+      if (!picks || picks.length === 0) { return; }
+      await vscode.commands.executeCommand('intellij-merge.openMergeEditor', picks[0]);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mergeEasy.commitMerge', async () => {
+      const folders = vscode.workspace.workspaceFolders ?? [];
+      // Find the first repo with an active merge.
+      let mergingRepo: string | undefined;
+      for (const folder of folders) {
+        let root = folder.uri.fsPath;
+        if (!fs.existsSync(path.join(root, '.git'))) {
+          const probed = await findRepoRoot(path.join(root, '.placeholder'));
+          if (!probed) { continue; }
+          root = probed;
+        }
+        if (fs.existsSync(path.join(root, '.git', 'MERGE_HEAD'))) {
+          mergingRepo = root;
+          break;
+        }
+      }
+      if (!mergingRepo) {
+        vscode.window.showWarningMessage('No active merge found in this workspace.');
+        return;
+      }
+
+      // Resolve branch names so the confirmation can name them.
+      const info = await getGitInfo(path.join(mergingRepo, '.placeholder'));
+      const intoBranch = info?.currentBranch ?? 'HEAD';
+      const fromBranch = info?.mergeHead ?? 'incoming';
+
+      const confirmMsg = ti(i18n, 'confirm.commitMerge', { from: fromBranch, into: intoBranch });
+      const btnCommit  = i18n['btn.commit']       ?? 'Commit';
+      const btnEdit    = i18n['btn.editMessage']  ?? 'Edit message…';
+
+      const choice = await vscode.window.showWarningMessage(
+        confirmMsg,
+        { modal: true },
+        btnCommit,
+        btnEdit
+      );
+      if (!choice) { return; } // user cancelled
+
+      let customMessage: string | undefined;
+      if (choice === btnEdit) {
+        // Pre-fill with the full prepared MERGE_MSG (multi-line preserved).
+        const mergeMsgPath = path.join(mergingRepo, '.git', 'MERGE_MSG');
+        let prefilled = `Merge branch '${fromBranch}' into ${intoBranch}`;
+        try {
+          const content = fs.readFileSync(mergeMsgPath, 'utf8').trim();
+          if (content) { prefilled = content; }
+        } catch { /* keep default */ }
+
+        const branchesLabel = ti(i18n, 'dialog.commitMerge.branches', {
+          from: fromBranch, into: intoBranch,
+        });
+        const message = await showCommitMessageDialog({
+          title:         i18n['dialog.commitMerge.title']  ?? 'Commit Merge',
+          branchesLabel,
+          prompt:        i18n['prompt.editMessage']        ?? 'Commit message',
+          prefilled,
+          okLabel:       btnCommit,
+          cancelLabel:   i18n['warn.cancel']               ?? 'Cancel',
+          hintLabel:     i18n['dialog.commitMerge.hint']   ?? 'Cmd/Ctrl+Enter to commit, Esc to cancel',
+        });
+        if (message === undefined) { return; } // dialog cancelled or closed
+        if (message.trim().length === 0) {
+          vscode.window.showWarningMessage(
+            i18n['warn.emptyMessage'] ?? 'Commit message cannot be empty.'
+          );
+          return;
+        }
+        customMessage = message;
+      }
+
+      try {
+        if (customMessage !== undefined) {
+          await commitMergeWithMessage(mergingRepo, customMessage);
+        } else {
+          await commitMerge(mergingRepo);
+        }
+        vscode.window.showInformationMessage(
+          `✓ Merge committed in ${path.basename(mergingRepo)}`
+        );
+        conflictsProvider.refresh();
+      } catch (e) {
+        vscode.window.showErrorMessage(
+          `Commit failed: ${(e as Error).message}`
+        );
+      }
+    })
+  );
+
+  // Narrow refresh trigger: only the git internal-state files. These change
+  // when a merge starts/ends, when `git add` is run, and on commit — exactly
+  // when the conflicts list could differ. Far quieter than a workspace-wide
+  // watcher, and catches updates from external terminals that the vscode.git
+  // API may not surface promptly.
+  const gitStateWatcher = vscode.workspace.createFileSystemWatcher(
+    '**/.git/{index,HEAD,MERGE_HEAD,COMMIT_EDITMSG,FETCH_HEAD}'
+  );
+  gitStateWatcher.onDidChange(() => conflictsProvider.refresh());
+  gitStateWatcher.onDidCreate(() => conflictsProvider.refresh());
+  gitStateWatcher.onDidDelete(() => conflictsProvider.refresh());
+  context.subscriptions.push(gitStateWatcher);
 
   // ── Run checks on the file that is already open at activation time ────────
   updateStatusBar(vscode.window.activeTextEditor);

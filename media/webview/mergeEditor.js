@@ -29,6 +29,25 @@
   let showContext   = true;
   const editBuffer  = new Map();
 
+  // Bulk-accept lock: derived from the current state — if every resolved hunk
+  // shares the same kind ('ours' or 'theirs'), the file is effectively in a
+  // bulk-LOCAL or bulk-REMOTE state regardless of how it got there (button
+  // click, Alt-arrow per hunk, or any combination). The opposite bulk button
+  // is disabled and "Undo bulk" reverts every hunk of that kind in one click.
+  function deriveBulkState() {
+    if (!state) { return { kind: null, indices: new Set() }; }
+    const resolved = state.hunks
+      .map((h, i) => ({ h, i }))
+      .filter(x => x.h.resolved);
+    if (resolved.length === 0) { return { kind: null, indices: new Set() }; }
+    const firstKind = resolved[0].h.resolutionKind;
+    const sameKind  = resolved.every(x => x.h.resolutionKind === firstKind);
+    if (sameKind && (firstKind === 'ours' || firstKind === 'theirs')) {
+      return { kind: firstKind, indices: new Set(resolved.map(x => x.i)) };
+    }
+    return { kind: null, indices: new Set() };
+  }
+
   // ── DOM refs ───────────────────────────────────────────────────────────────
   const $  = id => document.getElementById(id);
   const elFileName    = $('file-name');
@@ -37,6 +56,9 @@
   const elBtnPrev     = $('btn-prev');
   const elBtnNext     = $('btn-next');
   const elBtnNonConf  = $('btn-apply-nonconflicting');
+  const elBtnAcceptAllLocal  = $('btn-accept-all-local');
+  const elBtnAcceptAllRemote = $('btn-accept-all-remote');
+  const elBtnUndoBulk        = $('btn-undo-bulk');
   const elBtnApply    = $('btn-apply');
   const elBtnToggle   = $('btn-toggle-context');
   const elLabelOurs   = $('label-ours');
@@ -109,6 +131,26 @@
     panel.addEventListener('scroll', () => syncScrollFrom(panel), { passive: true });
   });
 
+  // Redraw ribbons whenever the panels are resized — covers cases where
+  // drawConnectors's render+scroll triggers don't fire: the welcome tab
+  // closing, the side bar being toggled, the splitter being dragged, etc.
+  if (typeof ResizeObserver !== 'undefined') {
+    let resizeRaf = 0;
+    const ro = new ResizeObserver(() => {
+      if (resizeRaf) { return; }
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        drawConnectors();
+      });
+    });
+    [document.getElementById('panels-container'), elOurs, elResult, elTheirs]
+      .filter(Boolean)
+      .forEach(node => ro.observe(node));
+  }
+  // Window resize as a fallback for hosts without ResizeObserver and for
+  // outer layout shifts (e.g. window itself resized).
+  window.addEventListener('resize', () => requestAnimationFrame(drawConnectors), { passive: true });
+
   // ── Messages ───────────────────────────────────────────────────────────────
   window.addEventListener('message', ({ data }) => {
     if (data.type !== 'init' && data.type !== 'fileUpdated') { return; }
@@ -134,6 +176,35 @@
     });
   });
 
+  elBtnAcceptAllLocal.addEventListener('click', () => {
+    if (!state) { return; }
+    const updates = [];
+    state.hunks.forEach((h, i) => {
+      if (!h.resolved && h.ours.length > 0) {
+        updates.push({ hunkIndex: i, resolution: { kind: 'ours' } });
+      }
+    });
+    if (updates.length > 0) { sendResolveBulk(updates); }
+  });
+
+  elBtnAcceptAllRemote.addEventListener('click', () => {
+    if (!state) { return; }
+    const updates = [];
+    state.hunks.forEach((h, i) => {
+      if (!h.resolved && h.theirs.length > 0) {
+        updates.push({ hunkIndex: i, resolution: { kind: 'theirs' } });
+      }
+    });
+    if (updates.length > 0) { sendResolveBulk(updates); }
+  });
+
+  elBtnUndoBulk.addEventListener('click', () => {
+    if (!state) { return; }
+    const { indices } = deriveBulkState();
+    if (indices.size === 0) { return; }
+    sendResolveBulk([...indices].map(i => ({ hunkIndex: i, resolution: null })));
+  });
+
   elBtnApply.addEventListener('click', () => vscode.postMessage({ type: 'applyAndSave' }));
 
   elBtnToggle.addEventListener('click', () => {
@@ -148,16 +219,19 @@
     if (!e.altKey) { return; }
     if (e.key === 'ArrowUp')    { e.preventDefault(); navigate(-1); }
     if (e.key === 'ArrowDown')  { e.preventDefault(); navigate(+1); }
-    if (e.key === 'ArrowLeft')  { e.preventDefault(); sendResolve(activeIndex, { kind: 'ours' }); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); sendResolve(activeIndex, { kind: 'theirs' }); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); sendResolve(activeIndex, { kind: 'ours' }); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); sendResolve(activeIndex, { kind: 'theirs' }); }
   });
 
   function navigate(dir) {
     if (!state || !state.hunks.length) { return; }
     const next = Math.max(0, Math.min(state.hunks.length - 1, activeIndex + dir));
-    if (next === activeIndex) { return; }
-    activeIndex = next;
-    render();
+    if (next !== activeIndex) {
+      activeIndex = next;
+      render();
+    }
+    // Scroll to the (possibly unchanged) active block so single-conflict files
+    // still respond to next/prev with a visible jump.
     scrollToActive();
   }
 
@@ -556,8 +630,14 @@
 
     elNavLabel.textContent = state.hunks.length
       ? `${activeIndex + 1} / ${state.hunks.length}` : '–';
-    elBtnPrev.disabled = activeIndex <= 0;
-    elBtnNext.disabled = activeIndex >= state.hunks.length - 1;
+    elBtnPrev.disabled = state.hunks.length === 0;
+    elBtnNext.disabled = state.hunks.length === 0;
+
+    const anyUnresolved = state.hunks.some(h => !h.resolved);
+    const { kind: bulkKind } = deriveBulkState();
+    elBtnAcceptAllLocal.disabled  = !anyUnresolved || bulkKind === 'theirs';
+    elBtnAcceptAllRemote.disabled = !anyUnresolved || bulkKind === 'ours';
+    elBtnUndoBulk.hidden = bulkKind === null;
 
     elOurs.innerHTML   = '';
     elResult.innerHTML = '';
@@ -856,6 +936,10 @@
 
   function sendResolve(index, resolution) {
     vscode.postMessage({ type: 'resolve', hunkIndex: index, resolution });
+  }
+
+  function sendResolveBulk(updates) {
+    vscode.postMessage({ type: 'resolveBulk', updates });
   }
 
   function scrollToActive() {
