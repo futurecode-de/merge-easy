@@ -68,3 +68,4 @@ git config --global merge.conflictstyle diff3
 | Green (`#447152`) | REMOTE changes (incoming branch) |
 | Red (`#8F5247`) | True conflict – both sides changed the same lines |
 | Brighter highlight within a line | Word-level change within that line |
+
