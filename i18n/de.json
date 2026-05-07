@@ -27,5 +27,16 @@
   "warn.cancel": "Abbrechen",
   "info.mergeDone": "✓ Merge abgeschlossen. Datei gespeichert und gestaged: {file}",
   "info.savedNoGit": "✓ Datei gespeichert. Hinweis: \"git add\" konnte nicht automatisch ausgeführt werden.",
-  "info.savedWithConflicts": "Datei mit {count} ungelösten Konflikt(en) gespeichert."
+  "info.savedWithConflicts": "Datei mit {count} ungelösten Konflikt(en) gespeichert.",
+  "btn.acceptAllLocal": "← Alle LOCAL",
+  "btn.acceptAllRemote": "Alle REMOTE →",
+  "btn.acceptAllLocal.tooltip": "LOCAL für alle ungelösten Konflikte übernehmen",
+  "btn.acceptAllRemote.tooltip": "REMOTE für alle ungelösten Konflikte übernehmen",
+  "sidebar.viewTitle": "Merge-Konflikte",
+  "sidebar.empty": "Keine Merge-Konflikte gefunden.",
+  "sidebar.refresh": "Aktualisieren",
+  "sidebar.openFileManual": "Datei mit Markern manuell öffnen…",
+  "sidebar.conflictCount": "{count} Konflikt",
+  "sidebar.conflictCountPlural": "{count} Konflikte",
+  "warn.notAFile": "Bitte eine Datei auswählen, keinen Ordner."
 }

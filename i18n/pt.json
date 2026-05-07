@@ -27,5 +27,16 @@
   "warn.cancel": "Cancelar",
   "info.mergeDone": "✓ Merge concluído. Arquivo salvo e em staging: {file}",
   "info.savedNoGit": "✓ Arquivo salvo. Nota: Não foi possível executar \"git add\" automaticamente.",
-  "info.savedWithConflicts": "Arquivo salvo com {count} conflito(s) não resolvido(s)."
+  "info.savedWithConflicts": "Arquivo salvo com {count} conflito(s) não resolvido(s).",
+  "btn.acceptAllLocal": "← Todos LOCAL",
+  "btn.acceptAllRemote": "Todos REMOTE →",
+  "btn.acceptAllLocal.tooltip": "Aceitar LOCAL em todos os conflitos não resolvidos",
+  "btn.acceptAllRemote.tooltip": "Aceitar REMOTE em todos os conflitos não resolvidos",
+  "sidebar.viewTitle": "Conflitos de merge",
+  "sidebar.empty": "Nenhum conflito de merge encontrado.",
+  "sidebar.refresh": "Atualizar",
+  "sidebar.openFileManual": "Abrir arquivo com marcadores manualmente…",
+  "sidebar.conflictCount": "{count} conflito",
+  "sidebar.conflictCountPlural": "{count} conflitos",
+  "warn.notAFile": "Selecione um arquivo, não uma pasta."
 }

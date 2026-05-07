@@ -27,5 +27,16 @@
   "warn.cancel": "取消",
   "info.mergeDone": "✓ 合併完成。檔案已儲存並暫存：{file}",
   "info.savedNoGit": "✓ 檔案已儲存。注意：無法自動執行「git add」。",
-  "info.savedWithConflicts": "檔案已儲存，含 {count} 個未解決的衝突。"
+  "info.savedWithConflicts": "檔案已儲存，含 {count} 個未解決的衝突。",
+  "btn.acceptAllLocal": "← 全部 LOCAL",
+  "btn.acceptAllRemote": "全部 REMOTE →",
+  "btn.acceptAllLocal.tooltip": "對所有未解決的衝突採用 LOCAL",
+  "btn.acceptAllRemote.tooltip": "對所有未解決的衝突採用 REMOTE",
+  "sidebar.viewTitle": "合併衝突",
+  "sidebar.empty": "找不到合併衝突。",
+  "sidebar.refresh": "重新整理",
+  "sidebar.openFileManual": "手動開啟含標記的檔案…",
+  "sidebar.conflictCount": "{count} 個衝突",
+  "sidebar.conflictCountPlural": "{count} 個衝突",
+  "warn.notAFile": "請選擇檔案，而非資料夾。"
 }

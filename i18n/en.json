@@ -27,5 +27,16 @@
   "warn.cancel": "Cancel",
   "info.mergeDone": "✓ Merge complete. File saved and staged: {file}",
   "info.savedNoGit": "✓ File saved. Note: Could not run \"git add\" automatically.",
-  "info.savedWithConflicts": "File saved with {count} unresolved conflict(s)."
+  "info.savedWithConflicts": "File saved with {count} unresolved conflict(s).",
+  "btn.acceptAllLocal": "← All LOCAL",
+  "btn.acceptAllRemote": "All REMOTE →",
+  "btn.acceptAllLocal.tooltip": "Accept LOCAL for all unresolved conflicts",
+  "btn.acceptAllRemote.tooltip": "Accept REMOTE for all unresolved conflicts",
+  "sidebar.viewTitle": "Merge Conflicts",
+  "sidebar.empty": "No merge conflicts found.",
+  "sidebar.refresh": "Refresh",
+  "sidebar.openFileManual": "Open file with markers manually…",
+  "sidebar.conflictCount": "{count} conflict",
+  "sidebar.conflictCountPlural": "{count} conflicts",
+  "warn.notAFile": "Please select a file, not a folder."
 }

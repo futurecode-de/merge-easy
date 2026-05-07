@@ -27,5 +27,16 @@
   "warn.cancel": "Cancelar",
   "info.mergeDone": "✓ Merge completo. Archivo guardado y en staging: {file}",
   "info.savedNoGit": "✓ Archivo guardado. Nota: No se pudo ejecutar \"git add\" automáticamente.",
-  "info.savedWithConflicts": "Archivo guardado con {count} conflicto(s) sin resolver."
+  "info.savedWithConflicts": "Archivo guardado con {count} conflicto(s) sin resolver.",
+  "btn.acceptAllLocal": "← Todos LOCAL",
+  "btn.acceptAllRemote": "Todos REMOTE →",
+  "btn.acceptAllLocal.tooltip": "Aceptar LOCAL en todos los conflictos sin resolver",
+  "btn.acceptAllRemote.tooltip": "Aceptar REMOTE en todos los conflictos sin resolver",
+  "sidebar.viewTitle": "Conflictos de fusión",
+  "sidebar.empty": "No se encontraron conflictos de fusión.",
+  "sidebar.refresh": "Actualizar",
+  "sidebar.openFileManual": "Abrir archivo con marcadores manualmente…",
+  "sidebar.conflictCount": "{count} conflicto",
+  "sidebar.conflictCountPlural": "{count} conflictos",
+  "warn.notAFile": "Seleccione un archivo, no una carpeta."
 }

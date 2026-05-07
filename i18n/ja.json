@@ -27,5 +27,16 @@
   "warn.cancel": "キャンセル",
   "info.mergeDone": "✓ マージ完了。ファイルを保存しステージしました: {file}",
   "info.savedNoGit": "✓ ファイルを保存しました。注意: \"git add\" を自動実行できませんでした。",
-  "info.savedWithConflicts": "{count} 件の未解決の競合がある状態でファイルを保存しました。"
+  "info.savedWithConflicts": "{count} 件の未解決の競合がある状態でファイルを保存しました。",
+  "btn.acceptAllLocal": "← すべてLOCAL",
+  "btn.acceptAllRemote": "すべてREMOTE →",
+  "btn.acceptAllLocal.tooltip": "未解決のすべての競合をLOCALで採用",
+  "btn.acceptAllRemote.tooltip": "未解決のすべての競合をREMOTEで採用",
+  "sidebar.viewTitle": "マージ競合",
+  "sidebar.empty": "マージ競合は見つかりませんでした。",
+  "sidebar.refresh": "更新",
+  "sidebar.openFileManual": "マーカー付きファイルを手動で開く…",
+  "sidebar.conflictCount": "{count} 件の競合",
+  "sidebar.conflictCountPlural": "{count} 件の競合",
+  "warn.notAFile": "フォルダではなくファイルを選択してください。"
 }
