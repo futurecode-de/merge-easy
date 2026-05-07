@@ -77,6 +77,15 @@ export async function markResolved(filePath: string): Promise<void> {
 }
 
 /**
+ * Finalize a merge using the message git already prepared in MERGE_MSG.
+ * Throws if the commit fails (e.g. pre-commit hook rejects, or the merge
+ * was concurrently aborted between the caller's check and this call).
+ */
+export async function commitMerge(repoRoot: string): Promise<void> {
+  await execFileAsync('git', ['-C', repoRoot, 'commit', '--no-edit']);
+}
+
+/**
  * List absolute paths of files in a git repo that are currently in a merge
  * conflict state (any of UU/AA/DD/AU/UA/DU/UD status codes from `git status`).
  * Returns an empty array on any failure — caller decides how to handle.

@@ -46,6 +46,12 @@
         "command": "mergeEasy.openFileManual",
         "title": "Open file with markers manually…",
         "category": "Merge Easy"
+      },
+      {
+        "command": "mergeEasy.commitMerge",
+        "title": "Commit merge",
+        "category": "Merge Easy",
+        "icon": "$(git-commit)"
       }
     ],
     "viewsContainers": {
@@ -66,6 +72,11 @@
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "mergeEasy.conflictsView",
+        "when": "mergeEasy:mergeReady",
+        "contents": "✓ All conflicts resolved.\nThe merge is ready to be committed.\n[Commit merge](command:mergeEasy.commitMerge)"
+      },
       {
         "view": "mergeEasy.conflictsView",
         "contents": "No merge conflicts found.\n[Refresh](command:mergeEasy.refreshConflicts)\n[Open file with markers manually…](command:mergeEasy.openFileManual)"

@@ -83,7 +83,10 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
 
   async getChildren(): Promise<ConflictFile[]> {
     const folders = vscode.workspace.workspaceFolders ?? [];
-    if (folders.length === 0) { return []; }
+    if (folders.length === 0) {
+      void vscode.commands.executeCommand('setContext', 'mergeEasy:mergeReady', false);
+      return [];
+    }
 
     const result: ConflictFile[] = [];
     const seen = new Set<string>();
@@ -111,11 +114,6 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
     const gitApi = await this._getGitApi();
     if (gitApi) {
       for (const repo of gitApi.repositories) {
-        // The git API repo doesn't expose its root directly in v1, but the
-        // first mergeChange (when present) gives us the file system. As a
-        // conservative supplement we look up the workspace folder containing
-        // any of the repo's tracked files. In practice the workspace-folder
-        // pass above is enough for the common case.
         const sample = repo.state.mergeChanges[0]?.uri;
         if (sample) {
           const wsFolder = vscode.workspace.getWorkspaceFolder(sample);
@@ -124,7 +122,14 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
       }
     }
 
+    // Detect "merge in progress" across all known repos.
+    let anyMergeActive = false;
+
     for (const repoRoot of repoRoots) {
+      if (fs.existsSync(path.join(repoRoot, '.git', 'MERGE_HEAD'))) {
+        anyMergeActive = true;
+      }
+
       const unmerged = await listUnmergedFiles(repoRoot);
       for (const fsPath of unmerged) {
         if (seen.has(fsPath)) { continue; }
@@ -136,7 +141,7 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
           if (!stat.isFile()) { continue; }
           count = parseConflicts(fs.readFileSync(fsPath, 'utf8')).hunks.length;
         } catch {
-          continue; // file disappeared between status and read
+          continue;
         }
 
         if (count > 0) {
@@ -151,6 +156,15 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
       const rb = vscode.workspace.asRelativePath(b.uri.fsPath);
       return ra.localeCompare(rb);
     });
+
+    // "Merge ready": the user is mid-merge AND every conflict is resolved.
+    // Welcome view uses this to show the "Commit merge" prompt instead of
+    // the generic empty state.
+    void vscode.commands.executeCommand(
+      'setContext',
+      'mergeEasy:mergeReady',
+      anyMergeActive && result.length === 0
+    );
 
     return result;
   }

@@ -12,10 +12,12 @@
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as path from 'path';
 import { parseConflicts } from './conflictParser';
 import { MergePanel } from './mergePanel';
 import { getI18n } from './i18n';
 import { ConflictsViewProvider } from './conflictsView';
+import { commitMerge, findRepoRoot } from './gitHelper';
 
 // Track which files we've already shown the one-time notification for
 const shownNotifications = new Set<string>();
@@ -195,6 +197,41 @@ export function activate(context: vscode.ExtensionContext): void {
       });
       if (!picks || picks.length === 0) { return; }
       await vscode.commands.executeCommand('intellij-merge.openMergeEditor', picks[0]);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mergeEasy.commitMerge', async () => {
+      const folders = vscode.workspace.workspaceFolders ?? [];
+      // Find the first repo with an active merge.
+      let mergingRepo: string | undefined;
+      for (const folder of folders) {
+        let root = folder.uri.fsPath;
+        if (!fs.existsSync(path.join(root, '.git'))) {
+          const probed = await findRepoRoot(path.join(root, '.placeholder'));
+          if (!probed) { continue; }
+          root = probed;
+        }
+        if (fs.existsSync(path.join(root, '.git', 'MERGE_HEAD'))) {
+          mergingRepo = root;
+          break;
+        }
+      }
+      if (!mergingRepo) {
+        vscode.window.showWarningMessage('No active merge found in this workspace.');
+        return;
+      }
+      try {
+        await commitMerge(mergingRepo);
+        vscode.window.showInformationMessage(
+          `✓ Merge committed in ${path.basename(mergingRepo)}`
+        );
+        conflictsProvider.refresh();
+      } catch (e) {
+        vscode.window.showErrorMessage(
+          `Commit failed: ${(e as Error).message}`
+        );
+      }
     })
   );
 
