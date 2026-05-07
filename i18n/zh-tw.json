@@ -32,6 +32,8 @@
   "btn.acceptAllRemote": "← 全部 REMOTE",
   "btn.acceptAllLocal.tooltip": "對所有未解決的衝突採用 LOCAL",
   "btn.acceptAllRemote.tooltip": "對所有未解決的衝突採用 REMOTE",
+  "btn.undoBulk": "↩ 復原批次套用",
+  "btn.undoBulk.tooltip": "復原批次套用並重新啟用兩個按鈕",
   "sidebar.viewTitle": "合併衝突",
   "sidebar.empty": "找不到合併衝突。",
   "sidebar.refresh": "重新整理",

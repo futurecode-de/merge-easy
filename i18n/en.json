@@ -32,6 +32,8 @@
   "btn.acceptAllRemote": "← All REMOTE",
   "btn.acceptAllLocal.tooltip": "Accept LOCAL for all unresolved conflicts",
   "btn.acceptAllRemote.tooltip": "Accept REMOTE for all unresolved conflicts",
+  "btn.undoBulk": "↩ Undo bulk",
+  "btn.undoBulk.tooltip": "Revert the bulk accept and re-enable both buttons",
   "sidebar.viewTitle": "Merge Conflicts",
   "sidebar.empty": "No merge conflicts found.",
   "sidebar.refresh": "Refresh",

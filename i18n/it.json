@@ -32,6 +32,8 @@
   "btn.acceptAllRemote": "← Tutti REMOTE",
   "btn.acceptAllLocal.tooltip": "Accetta LOCAL per tutti i conflitti irrisolti",
   "btn.acceptAllRemote.tooltip": "Accetta REMOTE per tutti i conflitti irrisolti",
+  "btn.undoBulk": "↩ Annulla in blocco",
+  "btn.undoBulk.tooltip": "Annulla l'accettazione in blocco e riabilita entrambi i pulsanti",
   "sidebar.viewTitle": "Conflitti di merge",
   "sidebar.empty": "Nessun conflitto di merge trovato.",
   "sidebar.refresh": "Aggiorna",

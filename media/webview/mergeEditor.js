@@ -29,6 +29,12 @@
   let showContext   = true;
   const editBuffer  = new Map();
 
+  // Bulk-accept lock: when one of "All LOCAL" / "All REMOTE" is clicked, the
+  // other becomes disabled until the bulk is undone (either via the dedicated
+  // undo-bulk button or by the user manually undoing every bulk-resolved hunk).
+  let bulkKind            = null;        // 'ours' | 'theirs' | null
+  let bulkResolvedIndices = new Set();   // indices resolved by the bulk action
+
   // ── DOM refs ───────────────────────────────────────────────────────────────
   const $  = id => document.getElementById(id);
   const elFileName    = $('file-name');
@@ -39,6 +45,7 @@
   const elBtnNonConf  = $('btn-apply-nonconflicting');
   const elBtnAcceptAllLocal  = $('btn-accept-all-local');
   const elBtnAcceptAllRemote = $('btn-accept-all-remote');
+  const elBtnUndoBulk        = $('btn-undo-bulk');
   const elBtnApply    = $('btn-apply');
   const elBtnToggle   = $('btn-toggle-context');
   const elLabelOurs   = $('label-ours');
@@ -120,6 +127,13 @@
     if (activeIndex >= state.hunks.length) {
       activeIndex = Math.max(0, state.hunks.length - 1);
     }
+    // Keep the bulk-lock in sync with reality: drop indices that are no
+    // longer resolved (e.g. user manually undid a bulk-resolved hunk via
+    // the per-hunk arrow), and clear the lock entirely when none remain.
+    bulkResolvedIndices = new Set(
+      [...bulkResolvedIndices].filter(i => state.hunks[i] && state.hunks[i].resolved)
+    );
+    if (bulkResolvedIndices.size === 0) { bulkKind = null; }
     render();
   });
 
@@ -138,16 +152,33 @@
 
   elBtnAcceptAllLocal.addEventListener('click', () => {
     if (!state) { return; }
+    bulkResolvedIndices.clear();
     state.hunks.forEach((h, i) => {
-      if (!h.resolved && h.ours.length > 0) { sendResolve(i, { kind: 'ours' }); }
+      if (!h.resolved && h.ours.length > 0) {
+        sendResolve(i, { kind: 'ours' });
+        bulkResolvedIndices.add(i);
+      }
     });
+    if (bulkResolvedIndices.size > 0) { bulkKind = 'ours'; }
   });
 
   elBtnAcceptAllRemote.addEventListener('click', () => {
     if (!state) { return; }
+    bulkResolvedIndices.clear();
     state.hunks.forEach((h, i) => {
-      if (!h.resolved && h.theirs.length > 0) { sendResolve(i, { kind: 'theirs' }); }
+      if (!h.resolved && h.theirs.length > 0) {
+        sendResolve(i, { kind: 'theirs' });
+        bulkResolvedIndices.add(i);
+      }
     });
+    if (bulkResolvedIndices.size > 0) { bulkKind = 'theirs'; }
+  });
+
+  elBtnUndoBulk.addEventListener('click', () => {
+    if (!state) { return; }
+    bulkResolvedIndices.forEach(i => sendResolve(i, null));
+    bulkResolvedIndices.clear();
+    bulkKind = null;
   });
 
   elBtnApply.addEventListener('click', () => vscode.postMessage({ type: 'applyAndSave' }));
@@ -579,8 +610,9 @@
     elBtnNext.disabled = state.hunks.length === 0;
 
     const anyUnresolved = state.hunks.some(h => !h.resolved);
-    elBtnAcceptAllLocal.disabled  = !anyUnresolved;
-    elBtnAcceptAllRemote.disabled = !anyUnresolved;
+    elBtnAcceptAllLocal.disabled  = !anyUnresolved || bulkKind === 'theirs';
+    elBtnAcceptAllRemote.disabled = !anyUnresolved || bulkKind === 'ours';
+    elBtnUndoBulk.hidden = bulkKind === null;
 
     elOurs.innerHTML   = '';
     elResult.innerHTML = '';

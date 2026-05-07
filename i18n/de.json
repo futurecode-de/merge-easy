@@ -32,6 +32,8 @@
   "btn.acceptAllRemote": "← Alle REMOTE",
   "btn.acceptAllLocal.tooltip": "LOCAL für alle ungelösten Konflikte übernehmen",
   "btn.acceptAllRemote.tooltip": "REMOTE für alle ungelösten Konflikte übernehmen",
+  "btn.undoBulk": "↩ Sammel-Auflösung rückgängig",
+  "btn.undoBulk.tooltip": "Sammel-Auflösung zurücksetzen und beide Buttons wieder freigeben",
   "sidebar.viewTitle": "Merge-Konflikte",
   "sidebar.empty": "Keine Merge-Konflikte gefunden.",
   "sidebar.refresh": "Aktualisieren",

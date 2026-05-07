@@ -32,6 +32,8 @@
   "btn.acceptAllRemote": "← すべてREMOTE",
   "btn.acceptAllLocal.tooltip": "未解決のすべての競合をLOCALで採用",
   "btn.acceptAllRemote.tooltip": "未解決のすべての競合をREMOTEで採用",
+  "btn.undoBulk": "↩ 一括採用を取り消す",
+  "btn.undoBulk.tooltip": "一括採用を元に戻して両方のボタンを再有効化",
   "sidebar.viewTitle": "マージ競合",
   "sidebar.empty": "マージ競合は見つかりませんでした。",
   "sidebar.refresh": "更新",

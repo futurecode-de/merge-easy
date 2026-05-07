@@ -32,6 +32,8 @@
   "btn.acceptAllRemote": "← Tous REMOTE",
   "btn.acceptAllLocal.tooltip": "Accepter LOCAL pour tous les conflits non résolus",
   "btn.acceptAllRemote.tooltip": "Accepter REMOTE pour tous les conflits non résolus",
+  "btn.undoBulk": "↩ Annuler l'acceptation en lot",
+  "btn.undoBulk.tooltip": "Annuler l'acceptation en lot et réactiver les deux boutons",
   "sidebar.viewTitle": "Conflits de fusion",
   "sidebar.empty": "Aucun conflit de fusion trouvé.",
   "sidebar.refresh": "Actualiser",

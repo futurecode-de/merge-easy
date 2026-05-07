@@ -32,6 +32,8 @@
   "btn.acceptAllRemote": "← Todos REMOTE",
   "btn.acceptAllLocal.tooltip": "Aceitar LOCAL em todos os conflitos não resolvidos",
   "btn.acceptAllRemote.tooltip": "Aceitar REMOTE em todos os conflitos não resolvidos",
+  "btn.undoBulk": "↩ Desfazer em lote",
+  "btn.undoBulk.tooltip": "Reverter a aceitação em lote e reativar ambos os botões",
   "sidebar.viewTitle": "Conflitos de merge",
   "sidebar.empty": "Nenhum conflito de merge encontrado.",
   "sidebar.refresh": "Atualizar",
