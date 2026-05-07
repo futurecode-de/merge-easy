@@ -29,11 +29,14 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
   private _apiSubscribed = false;
 
   constructor(private readonly _context: vscode.ExtensionContext) {
-    this._subscribeToGit();
+    // Fire-and-forget async init: the git extension may not be active yet,
+    // so we await its activation before subscribing. Once subscribed, fire
+    // a change event to populate the tree.
+    void this._subscribeToGit().then(() => this._onDidChangeTreeData.fire());
   }
 
   refresh(): void {
-    this._subscribeToGit(); // catch newly opened repositories
+    void this._subscribeToGit(); // catch newly opened repositories
     this._onDidChangeTreeData.fire();
   }
 
@@ -65,7 +68,7 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
   }
 
   async getChildren(): Promise<ConflictFile[]> {
-    const gitApi = this._getGitApi();
+    const gitApi = await this._getGitApi();
     if (!gitApi) { return []; }
 
     const result: ConflictFile[] = [];
@@ -106,7 +109,7 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
   }
 
   // ── Git API helpers ──────────────────────────────────────────────────────
-  private _getGitApi(): {
+  private async _getGitApi(): Promise<{
     repositories: Array<{
       state: {
         mergeChanges: Array<{ uri: vscode.Uri }>;
@@ -114,20 +117,21 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
       };
     }>;
     onDidOpenRepository: vscode.Event<unknown>;
-  } | undefined {
+  } | undefined> {
     const ext = vscode.extensions.getExtension('vscode.git');
     if (!ext) { return undefined; }
-    const exports = ext.isActive ? ext.exports : undefined;
-    if (!exports) { return undefined; }
+    if (!ext.isActive) {
+      try { await ext.activate(); } catch { return undefined; }
+    }
     try {
-      return exports.getAPI(1);
+      return ext.exports.getAPI(1);
     } catch {
       return undefined;
     }
   }
 
-  private _subscribeToGit(): void {
-    const api = this._getGitApi();
+  private async _subscribeToGit(): Promise<void> {
+    const api = await this._getGitApi();
     if (!api) { return; }
 
     // Subscribe to each repo's state-change event exactly once.
