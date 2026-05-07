@@ -47,23 +47,40 @@ const vscode = __importStar(require("vscode"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const conflictParser_1 = require("./conflictParser");
+const gitHelper_1 = require("./gitHelper");
 const i18n_1 = require("./i18n");
 class ConflictsViewProvider {
-    constructor(_context) {
-        this._context = _context;
+    constructor() {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this._i18n = (0, i18n_1.getI18n)();
         this._gitWatchers = [];
         this._knownRepos = new WeakSet();
         this._apiSubscribed = false;
-        this._subscribeToGit();
+        // Fire-and-forget async init: subscribe to the vscode.git API for live
+        // refresh events. Data fetching happens via git CLI (see getChildren),
+        // which doesn't depend on the API being ready.
+        void this._subscribeToGit().then(() => this._onDidChangeTreeData.fire());
     }
     refresh() {
-        this._subscribeToGit(); // catch newly opened repositories
-        this._onDidChangeTreeData.fire();
+        // Debounce: vscode.git's onDidChange fires on every working-tree change,
+        // and so do user-triggered refresh-button clicks during quick succession.
+        // Collapse a burst into a single getChildren round-trip (which spawns git
+        // subprocesses), keeping the loading bar from blinking continuously.
+        if (this._refreshTimer !== undefined) {
+            clearTimeout(this._refreshTimer);
+        }
+        this._refreshTimer = setTimeout(() => {
+            this._refreshTimer = undefined;
+            void this._subscribeToGit(); // catch newly opened repositories
+            this._onDidChangeTreeData.fire();
+        }, 250);
     }
     dispose() {
+        if (this._refreshTimer !== undefined) {
+            clearTimeout(this._refreshTimer);
+            this._refreshTimer = undefined;
+        }
         this._gitWatchers.forEach(d => d.dispose());
         this._gitWatchers.length = 0;
     }
@@ -86,17 +103,56 @@ class ConflictsViewProvider {
         return item;
     }
     async getChildren() {
-        const gitApi = this._getGitApi();
-        if (!gitApi) {
+        const folders = vscode.workspace.workspaceFolders ?? [];
+        if (folders.length === 0) {
+            void vscode.commands.executeCommand('setContext', 'mergeEasy:mergeReady', false);
             return [];
         }
         const result = [];
         const seen = new Set();
-        for (const repo of gitApi.repositories) {
-            // mergeChanges is the canonical list of unmerged files in vscode.git API v1
-            const changes = repo.state.mergeChanges;
-            for (const c of changes) {
-                const fsPath = c.uri.fsPath;
+        // Discover candidate repo roots: walk up from each workspace folder to
+        // find the enclosing git repo. Handles the case where the workspace
+        // folder is a subdirectory of the repo (typical for sub-package roots
+        // or test-fixture workspaces nested inside a parent repo).
+        const repoRoots = new Set();
+        for (const folder of folders) {
+            const root = folder.uri.fsPath;
+            // Probe for .git directly first (cheap, no fork).
+            try {
+                if (fs.existsSync(path.join(root, '.git'))) {
+                    repoRoots.add(root);
+                    continue;
+                }
+            }
+            catch { /* ignore */ }
+            // Fall back to `git rev-parse --show-toplevel` from this folder.
+            const probed = await (0, gitHelper_1.findRepoRoot)(path.join(root, '.placeholder'));
+            if (probed) {
+                repoRoots.add(probed);
+            }
+        }
+        // Also add any repos the vscode.git API knows about — covers nested
+        // repos the user opened explicitly that aren't workspace roots.
+        const gitApi = await this._getGitApi();
+        if (gitApi) {
+            for (const repo of gitApi.repositories) {
+                const sample = repo.state.mergeChanges[0]?.uri;
+                if (sample) {
+                    const wsFolder = vscode.workspace.getWorkspaceFolder(sample);
+                    if (wsFolder) {
+                        repoRoots.add(wsFolder.uri.fsPath);
+                    }
+                }
+            }
+        }
+        // Detect "merge in progress" across all known repos.
+        let anyMergeActive = false;
+        for (const repoRoot of repoRoots) {
+            if (fs.existsSync(path.join(repoRoot, '.git', 'MERGE_HEAD'))) {
+                anyMergeActive = true;
+            }
+            const unmerged = await (0, gitHelper_1.listUnmergedFiles)(repoRoot);
+            for (const fsPath of unmerged) {
                 if (seen.has(fsPath)) {
                     continue;
                 }
@@ -107,14 +163,13 @@ class ConflictsViewProvider {
                     if (!stat.isFile()) {
                         continue;
                     }
-                    const content = fs.readFileSync(fsPath, 'utf8');
-                    count = (0, conflictParser_1.parseConflicts)(content).hunks.length;
+                    count = (0, conflictParser_1.parseConflicts)(fs.readFileSync(fsPath, 'utf8')).hunks.length;
                 }
                 catch {
-                    continue; // file disappeared between status and read
+                    continue;
                 }
                 if (count > 0) {
-                    result.push({ uri: c.uri, conflictCount: count });
+                    result.push({ uri: vscode.Uri.file(fsPath), conflictCount: count });
                 }
             }
         }
@@ -124,27 +179,35 @@ class ConflictsViewProvider {
             const rb = vscode.workspace.asRelativePath(b.uri.fsPath);
             return ra.localeCompare(rb);
         });
+        // "Merge ready": the user is mid-merge AND every conflict is resolved.
+        // Welcome view uses this to show the "Commit merge" prompt instead of
+        // the generic empty state.
+        void vscode.commands.executeCommand('setContext', 'mergeEasy:mergeReady', anyMergeActive && result.length === 0);
         return result;
     }
     // ── Git API helpers ──────────────────────────────────────────────────────
-    _getGitApi() {
+    async _getGitApi() {
         const ext = vscode.extensions.getExtension('vscode.git');
         if (!ext) {
             return undefined;
         }
-        const exports = ext.isActive ? ext.exports : undefined;
-        if (!exports) {
-            return undefined;
+        if (!ext.isActive) {
+            try {
+                await ext.activate();
+            }
+            catch {
+                return undefined;
+            }
         }
         try {
-            return exports.getAPI(1);
+            return ext.exports.getAPI(1);
         }
         catch {
             return undefined;
         }
     }
-    _subscribeToGit() {
-        const api = this._getGitApi();
+    async _subscribeToGit() {
+        const api = await this._getGitApi();
         if (!api) {
             return;
         }

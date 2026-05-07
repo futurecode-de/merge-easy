@@ -116,6 +116,22 @@ class MergePanel {
                 });
                 break;
             }
+            case 'resolveBulk': {
+                // Apply every update first, then echo a single fileUpdated. This
+                // avoids a race where the webview's bulk-state pruner sees partial
+                // updates and drops indices that are about to be resolved.
+                for (const u of msg.updates) {
+                    const hunk = this._parsed.hunks[u.hunkIndex];
+                    if (hunk) {
+                        hunk.resolution = u.resolution ?? undefined;
+                    }
+                }
+                this._panel.webview.postMessage({
+                    type: 'fileUpdated',
+                    payload: this._buildPayload(),
+                });
+                break;
+            }
             case 'applyAndSave': {
                 await this._applyAndSave();
                 break;
@@ -237,8 +253,9 @@ class MergePanel {
         <button id="btn-next" title="Next conflict (Alt+↓)">&#9660;</button>
       </div>
       <div id="action-controls">
-        <button id="btn-accept-all-local" title="${this._i18n['btn.acceptAllLocal.tooltip'] ?? 'Accept LOCAL for all unresolved conflicts'}">${this._i18n['btn.acceptAllLocal'] ?? '\u2190 All LOCAL'}</button>
-        <button id="btn-accept-all-remote" title="${this._i18n['btn.acceptAllRemote.tooltip'] ?? 'Accept REMOTE for all unresolved conflicts'}">${this._i18n['btn.acceptAllRemote'] ?? 'All REMOTE \u2192'}</button>
+        <button id="btn-accept-all-local" title="${this._i18n['btn.acceptAllLocal.tooltip'] ?? 'Accept LOCAL for all unresolved conflicts'}">${this._i18n['btn.acceptAllLocal'] ?? 'All LOCAL \u2192'}</button>
+        <button id="btn-accept-all-remote" title="${this._i18n['btn.acceptAllRemote.tooltip'] ?? 'Accept REMOTE for all unresolved conflicts'}">${this._i18n['btn.acceptAllRemote'] ?? '\u2190 All REMOTE'}</button>
+        <button id="btn-undo-bulk" hidden title="${this._i18n['btn.undoBulk.tooltip'] ?? 'Undo bulk accept'}">${this._i18n['btn.undoBulk'] ?? '\u21a9 Undo bulk'}</button>
         <button id="btn-toggle-context">${this._i18n['btn.hideContext'] ?? '\u229f Hide context'}</button>
         <button id="btn-apply-nonconflicting">${this._i18n['btn.nonConflicting'] ?? '\u26a1 Non-conflicting'}</button>
         <button id="btn-apply" class="primary">${this._i18n['btn.applyMerge'] ?? '\u2713 Apply Merge'}</button>

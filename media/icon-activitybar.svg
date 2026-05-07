@@ -6,7 +6,7 @@
      fill="currentColor">
   <!-- Rounded frame (stroke instead of fill so VSCode's themed bg shows through) -->
   <rect x="5" y="5" width="118" height="118" rx="20"
-        fill="none" stroke="currentColor" stroke-width="9" opacity=".5"/>
+        fill="none" stroke="currentColor" stroke-width="9" opacity="1"/>
   <!-- Inner content scaled to 76% and recentered, so the bars sit comfortably inside the thicker frame -->
   <g transform="translate(15.5,15.5) scale(0.76)">
     <!-- LOCAL panel -->
