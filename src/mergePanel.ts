@@ -22,6 +22,7 @@ type ExtensionMessage =
 // Messages sent FROM the webview TO the extension
 type WebviewMessage =
   | { type: 'resolve'; hunkIndex: number; resolution: Resolution | null }
+  | { type: 'resolveBulk'; updates: Array<{ hunkIndex: number; resolution: Resolution | null }> }
   | { type: 'applyAndSave' }
   | { type: 'ready' };
 
@@ -153,6 +154,21 @@ export class MergePanel {
           hunk.resolution = msg.resolution ?? undefined;
         }
         // Echo back updated state so the webview can refresh the result panel
+        this._panel.webview.postMessage({
+          type: 'fileUpdated',
+          payload: this._buildPayload(),
+        } satisfies ExtensionMessage);
+        break;
+      }
+
+      case 'resolveBulk': {
+        // Apply every update first, then echo a single fileUpdated. This
+        // avoids a race where the webview's bulk-state pruner sees partial
+        // updates and drops indices that are about to be resolved.
+        for (const u of msg.updates) {
+          const hunk = this._parsed.hunks[u.hunkIndex];
+          if (hunk) { hunk.resolution = u.resolution ?? undefined; }
+        }
         this._panel.webview.postMessage({
           type: 'fileUpdated',
           payload: this._buildPayload(),

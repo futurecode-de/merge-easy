@@ -152,33 +152,42 @@
 
   elBtnAcceptAllLocal.addEventListener('click', () => {
     if (!state) { return; }
+    const updates = [];
     bulkResolvedIndices.clear();
     state.hunks.forEach((h, i) => {
       if (!h.resolved && h.ours.length > 0) {
-        sendResolve(i, { kind: 'ours' });
+        updates.push({ hunkIndex: i, resolution: { kind: 'ours' } });
         bulkResolvedIndices.add(i);
       }
     });
-    if (bulkResolvedIndices.size > 0) { bulkKind = 'ours'; }
+    if (updates.length > 0) {
+      bulkKind = 'ours';
+      sendResolveBulk(updates);
+    }
   });
 
   elBtnAcceptAllRemote.addEventListener('click', () => {
     if (!state) { return; }
+    const updates = [];
     bulkResolvedIndices.clear();
     state.hunks.forEach((h, i) => {
       if (!h.resolved && h.theirs.length > 0) {
-        sendResolve(i, { kind: 'theirs' });
+        updates.push({ hunkIndex: i, resolution: { kind: 'theirs' } });
         bulkResolvedIndices.add(i);
       }
     });
-    if (bulkResolvedIndices.size > 0) { bulkKind = 'theirs'; }
+    if (updates.length > 0) {
+      bulkKind = 'theirs';
+      sendResolveBulk(updates);
+    }
   });
 
   elBtnUndoBulk.addEventListener('click', () => {
-    if (!state) { return; }
-    bulkResolvedIndices.forEach(i => sendResolve(i, null));
+    if (!state || bulkResolvedIndices.size === 0) { return; }
+    const updates = [...bulkResolvedIndices].map(i => ({ hunkIndex: i, resolution: null }));
     bulkResolvedIndices.clear();
     bulkKind = null;
+    sendResolveBulk(updates);
   });
 
   elBtnApply.addEventListener('click', () => vscode.postMessage({ type: 'applyAndSave' }));
@@ -195,8 +204,8 @@
     if (!e.altKey) { return; }
     if (e.key === 'ArrowUp')    { e.preventDefault(); navigate(-1); }
     if (e.key === 'ArrowDown')  { e.preventDefault(); navigate(+1); }
-    if (e.key === 'ArrowLeft')  { e.preventDefault(); sendResolve(activeIndex, { kind: 'ours' }); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); sendResolve(activeIndex, { kind: 'theirs' }); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); sendResolve(activeIndex, { kind: 'ours' }); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); sendResolve(activeIndex, { kind: 'theirs' }); }
   });
 
   function navigate(dir) {
@@ -911,6 +920,10 @@
 
   function sendResolve(index, resolution) {
     vscode.postMessage({ type: 'resolve', hunkIndex: index, resolution });
+  }
+
+  function sendResolveBulk(updates) {
+    vscode.postMessage({ type: 'resolveBulk', updates });
   }
 
   function scrollToActive() {

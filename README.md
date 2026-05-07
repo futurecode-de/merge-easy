@@ -11,7 +11,7 @@ A side-by-side merge conflict editor for VS Code – three panels side by side (
 - **Syntax highlighting** – context sections use highlight.js (PHP, JS/TS, Python, Java, Go, CSS, HTML, JSON, SQL, Bash, YAML, …)
 - **Editable RESULT panel** – click any resolved block to edit the merged text directly
 - **Navigate conflicts** – toolbar buttons or `Alt+↑` / `Alt+↓`
-- **Keyboard shortcuts** – `Alt+←` accept LOCAL, `Alt+→` accept REMOTE
+- **Keyboard shortcuts** – `Alt+→` accept LOCAL, `Alt+←` accept REMOTE
 - **Apply & git add** – one click saves the resolved file and runs `git add` automatically
 - **diff3 support** – detects three-way conflict markers including the common ancestor (BASE)
 
@@ -27,7 +27,7 @@ A side-by-side merge conflict editor for VS Code – three panels side by side (
 1. Open a file that contains git conflict markers (`<<<<<<<`)
 2. Click the **$(git-merge) icon** in the editor title bar  
    *or* right-click the file in the Explorer → **Open in Merge Editor**
-3. Resolve conflicts by clicking the arrow buttons (`→` / `←`) or pressing `Alt+←` / `Alt+→`
+3. Resolve conflicts by clicking the arrow buttons (`→` / `←`) or pressing `Alt+→` / `Alt+←`
 4. Optionally click **⚡ Non-conflicting** to auto-accept all unambiguous hunks
 5. Click **✓ Apply Merge** to save and stage the file
 
@@ -37,8 +37,8 @@ A side-by-side merge conflict editor for VS Code – three panels side by side (
 |---|---|
 | `Alt+↑` | Previous conflict |
 | `Alt+↓` | Next conflict |
-| `Alt+←` | Accept LOCAL for active conflict |
-| `Alt+→` | Accept REMOTE for active conflict |
+| `Alt+→` | Accept LOCAL for active conflict |
+| `Alt+←` | Accept REMOTE for active conflict |
 
 ## Optional: enable diff3 style
 
