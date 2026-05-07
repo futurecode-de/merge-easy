@@ -12,7 +12,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseConflicts } from './conflictParser';
-import { listUnmergedFiles } from './gitHelper';
+import { listUnmergedFiles, findRepoRoot } from './gitHelper';
 import { getI18n, ti, I18n } from './i18n';
 
 export interface ConflictFile {
@@ -75,14 +75,23 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
     const result: ConflictFile[] = [];
     const seen = new Set<string>();
 
-    // Discover candidate repo roots: any workspace folder that contains a
-    // .git entry (file or dir — supports submodules / worktrees too).
+    // Discover candidate repo roots: walk up from each workspace folder to
+    // find the enclosing git repo. Handles the case where the workspace
+    // folder is a subdirectory of the repo (typical for sub-package roots
+    // or test-fixture workspaces nested inside a parent repo).
     const repoRoots = new Set<string>();
     for (const folder of folders) {
       const root = folder.uri.fsPath;
+      // Probe for .git directly first (cheap, no fork).
       try {
-        if (fs.existsSync(path.join(root, '.git'))) { repoRoots.add(root); }
+        if (fs.existsSync(path.join(root, '.git'))) {
+          repoRoots.add(root);
+          continue;
+        }
       } catch { /* ignore */ }
+      // Fall back to `git rev-parse --show-toplevel` from this folder.
+      const probed = await findRepoRoot(path.join(root, '.placeholder'));
+      if (probed) { repoRoots.add(probed); }
     }
     // Also add any repos the vscode.git API knows about — covers nested
     // repos the user opened explicitly that aren't workspace roots.
