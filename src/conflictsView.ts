@@ -12,6 +12,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseConflicts } from './conflictParser';
+import { listUnmergedFiles } from './gitHelper';
 import { getI18n, ti, I18n } from './i18n';
 
 export interface ConflictFile {
@@ -28,10 +29,10 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
   private readonly _knownRepos = new WeakSet<object>();
   private _apiSubscribed = false;
 
-  constructor(private readonly _context: vscode.ExtensionContext) {
-    // Fire-and-forget async init: the git extension may not be active yet,
-    // so we await its activation before subscribing. Once subscribed, fire
-    // a change event to populate the tree.
+  constructor() {
+    // Fire-and-forget async init: subscribe to the vscode.git API for live
+    // refresh events. Data fetching happens via git CLI (see getChildren),
+    // which doesn't depend on the API being ready.
     void this._subscribeToGit().then(() => this._onDidChangeTreeData.fire());
   }
 
@@ -68,17 +69,42 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
   }
 
   async getChildren(): Promise<ConflictFile[]> {
-    const gitApi = await this._getGitApi();
-    if (!gitApi) { return []; }
+    const folders = vscode.workspace.workspaceFolders ?? [];
+    if (folders.length === 0) { return []; }
 
     const result: ConflictFile[] = [];
     const seen = new Set<string>();
 
-    for (const repo of gitApi.repositories) {
-      // mergeChanges is the canonical list of unmerged files in vscode.git API v1
-      const changes = repo.state.mergeChanges as Array<{ uri: vscode.Uri }>;
-      for (const c of changes) {
-        const fsPath = c.uri.fsPath;
+    // Discover candidate repo roots: any workspace folder that contains a
+    // .git entry (file or dir — supports submodules / worktrees too).
+    const repoRoots = new Set<string>();
+    for (const folder of folders) {
+      const root = folder.uri.fsPath;
+      try {
+        if (fs.existsSync(path.join(root, '.git'))) { repoRoots.add(root); }
+      } catch { /* ignore */ }
+    }
+    // Also add any repos the vscode.git API knows about — covers nested
+    // repos the user opened explicitly that aren't workspace roots.
+    const gitApi = await this._getGitApi();
+    if (gitApi) {
+      for (const repo of gitApi.repositories) {
+        // The git API repo doesn't expose its root directly in v1, but the
+        // first mergeChange (when present) gives us the file system. As a
+        // conservative supplement we look up the workspace folder containing
+        // any of the repo's tracked files. In practice the workspace-folder
+        // pass above is enough for the common case.
+        const sample = repo.state.mergeChanges[0]?.uri;
+        if (sample) {
+          const wsFolder = vscode.workspace.getWorkspaceFolder(sample);
+          if (wsFolder) { repoRoots.add(wsFolder.uri.fsPath); }
+        }
+      }
+    }
+
+    for (const repoRoot of repoRoots) {
+      const unmerged = await listUnmergedFiles(repoRoot);
+      for (const fsPath of unmerged) {
         if (seen.has(fsPath)) { continue; }
         seen.add(fsPath);
 
@@ -86,14 +112,13 @@ export class ConflictsViewProvider implements vscode.TreeDataProvider<ConflictFi
         try {
           const stat = fs.statSync(fsPath);
           if (!stat.isFile()) { continue; }
-          const content = fs.readFileSync(fsPath, 'utf8');
-          count = parseConflicts(content).hunks.length;
+          count = parseConflicts(fs.readFileSync(fsPath, 'utf8')).hunks.length;
         } catch {
           continue; // file disappeared between status and read
         }
 
         if (count > 0) {
-          result.push({ uri: c.uri, conflictCount: count });
+          result.push({ uri: vscode.Uri.file(fsPath), conflictCount: count });
         }
       }
     }

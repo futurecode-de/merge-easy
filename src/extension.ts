@@ -171,7 +171,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // ── 5. Activity-Bar sidebar: list of files with merge conflicts ──────────
-  const conflictsProvider = new ConflictsViewProvider(context);
+  const conflictsProvider = new ConflictsViewProvider();
   const conflictsTreeView = vscode.window.createTreeView('mergeEasy.conflictsView', {
     treeDataProvider: conflictsProvider,
     showCollapseAll: false,

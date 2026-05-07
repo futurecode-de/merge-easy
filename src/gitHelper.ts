@@ -77,6 +77,35 @@ export async function markResolved(filePath: string): Promise<void> {
 }
 
 /**
+ * List absolute paths of files in a git repo that are currently in a merge
+ * conflict state (any of UU/AA/DD/AU/UA/DU/UD status codes from `git status`).
+ * Returns an empty array on any failure — caller decides how to handle.
+ */
+export async function listUnmergedFiles(repoRoot: string): Promise<string[]> {
+  try {
+    const { stdout } = await execFileAsync('git', [
+      '-C', repoRoot,
+      'status', '--porcelain=v1', '-z',
+    ]);
+    const conflictCodes = new Set(['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU']);
+    const result: string[] = [];
+    // -z output: each entry is "XY <path>\0" (renames have an extra NUL-separated origin we ignore).
+    const entries = stdout.split('\0').filter(e => e.length > 0);
+    for (const entry of entries) {
+      if (entry.length < 4) { continue; }
+      const code = entry.substring(0, 2);
+      const relPath = entry.substring(3);
+      if (conflictCodes.has(code)) {
+        result.push(path.isAbsolute(relPath) ? relPath : path.join(repoRoot, relPath));
+      }
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Check if a file is currently listed as conflicted in git status.
  */
 export async function isFileConflicted(filePath: string): Promise<boolean> {
