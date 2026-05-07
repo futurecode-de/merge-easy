@@ -29,11 +29,24 @@
   let showContext   = true;
   const editBuffer  = new Map();
 
-  // Bulk-accept lock: when one of "All LOCAL" / "All REMOTE" is clicked, the
-  // other becomes disabled until the bulk is undone (either via the dedicated
-  // undo-bulk button or by the user manually undoing every bulk-resolved hunk).
-  let bulkKind            = null;        // 'ours' | 'theirs' | null
-  let bulkResolvedIndices = new Set();   // indices resolved by the bulk action
+  // Bulk-accept lock: derived from the current state — if every resolved hunk
+  // shares the same kind ('ours' or 'theirs'), the file is effectively in a
+  // bulk-LOCAL or bulk-REMOTE state regardless of how it got there (button
+  // click, Alt-arrow per hunk, or any combination). The opposite bulk button
+  // is disabled and "Undo bulk" reverts every hunk of that kind in one click.
+  function deriveBulkState() {
+    if (!state) { return { kind: null, indices: new Set() }; }
+    const resolved = state.hunks
+      .map((h, i) => ({ h, i }))
+      .filter(x => x.h.resolved);
+    if (resolved.length === 0) { return { kind: null, indices: new Set() }; }
+    const firstKind = resolved[0].h.resolutionKind;
+    const sameKind  = resolved.every(x => x.h.resolutionKind === firstKind);
+    if (sameKind && (firstKind === 'ours' || firstKind === 'theirs')) {
+      return { kind: firstKind, indices: new Set(resolved.map(x => x.i)) };
+    }
+    return { kind: null, indices: new Set() };
+  }
 
   // ── DOM refs ───────────────────────────────────────────────────────────────
   const $  = id => document.getElementById(id);
@@ -147,13 +160,6 @@
     if (activeIndex >= state.hunks.length) {
       activeIndex = Math.max(0, state.hunks.length - 1);
     }
-    // Keep the bulk-lock in sync with reality: drop indices that are no
-    // longer resolved (e.g. user manually undid a bulk-resolved hunk via
-    // the per-hunk arrow), and clear the lock entirely when none remain.
-    bulkResolvedIndices = new Set(
-      [...bulkResolvedIndices].filter(i => state.hunks[i] && state.hunks[i].resolved)
-    );
-    if (bulkResolvedIndices.size === 0) { bulkKind = null; }
     render();
   });
 
@@ -173,41 +179,30 @@
   elBtnAcceptAllLocal.addEventListener('click', () => {
     if (!state) { return; }
     const updates = [];
-    bulkResolvedIndices.clear();
     state.hunks.forEach((h, i) => {
       if (!h.resolved && h.ours.length > 0) {
         updates.push({ hunkIndex: i, resolution: { kind: 'ours' } });
-        bulkResolvedIndices.add(i);
       }
     });
-    if (updates.length > 0) {
-      bulkKind = 'ours';
-      sendResolveBulk(updates);
-    }
+    if (updates.length > 0) { sendResolveBulk(updates); }
   });
 
   elBtnAcceptAllRemote.addEventListener('click', () => {
     if (!state) { return; }
     const updates = [];
-    bulkResolvedIndices.clear();
     state.hunks.forEach((h, i) => {
       if (!h.resolved && h.theirs.length > 0) {
         updates.push({ hunkIndex: i, resolution: { kind: 'theirs' } });
-        bulkResolvedIndices.add(i);
       }
     });
-    if (updates.length > 0) {
-      bulkKind = 'theirs';
-      sendResolveBulk(updates);
-    }
+    if (updates.length > 0) { sendResolveBulk(updates); }
   });
 
   elBtnUndoBulk.addEventListener('click', () => {
-    if (!state || bulkResolvedIndices.size === 0) { return; }
-    const updates = [...bulkResolvedIndices].map(i => ({ hunkIndex: i, resolution: null }));
-    bulkResolvedIndices.clear();
-    bulkKind = null;
-    sendResolveBulk(updates);
+    if (!state) { return; }
+    const { indices } = deriveBulkState();
+    if (indices.size === 0) { return; }
+    sendResolveBulk([...indices].map(i => ({ hunkIndex: i, resolution: null })));
   });
 
   elBtnApply.addEventListener('click', () => vscode.postMessage({ type: 'applyAndSave' }));
@@ -639,6 +634,7 @@
     elBtnNext.disabled = state.hunks.length === 0;
 
     const anyUnresolved = state.hunks.some(h => !h.resolved);
+    const { kind: bulkKind } = deriveBulkState();
     elBtnAcceptAllLocal.disabled  = !anyUnresolved || bulkKind === 'theirs';
     elBtnAcceptAllRemote.disabled = !anyUnresolved || bulkKind === 'ours';
     elBtnUndoBulk.hidden = bulkKind === null;
