@@ -118,6 +118,26 @@
     panel.addEventListener('scroll', () => syncScrollFrom(panel), { passive: true });
   });
 
+  // Redraw ribbons whenever the panels are resized — covers cases where
+  // drawConnectors's render+scroll triggers don't fire: the welcome tab
+  // closing, the side bar being toggled, the splitter being dragged, etc.
+  if (typeof ResizeObserver !== 'undefined') {
+    let resizeRaf = 0;
+    const ro = new ResizeObserver(() => {
+      if (resizeRaf) { return; }
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        drawConnectors();
+      });
+    });
+    [document.getElementById('panels-container'), elOurs, elResult, elTheirs]
+      .filter(Boolean)
+      .forEach(node => ro.observe(node));
+  }
+  // Window resize as a fallback for hosts without ResizeObserver and for
+  // outer layout shifts (e.g. window itself resized).
+  window.addEventListener('resize', () => requestAnimationFrame(drawConnectors), { passive: true });
+
   // ── Messages ───────────────────────────────────────────────────────────────
   window.addEventListener('message', ({ data }) => {
     if (data.type !== 'init' && data.type !== 'fileUpdated') { return; }
