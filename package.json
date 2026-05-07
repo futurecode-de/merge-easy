@@ -52,7 +52,7 @@
       "explorer/context": [
         {
           "command": "intellij-merge.openMergeEditor",
-          "when": "resourceScheme == file",
+          "when": "resourceScheme == file && !explorerResourceIsFolder",
           "group": "1_modification"
         }
       ]

@@ -34,6 +34,20 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
 
+      let stat: fs.Stats;
+      try {
+        stat = fs.statSync(fileUri.fsPath);
+      } catch {
+        vscode.window.showWarningMessage(`Cannot access: ${fileUri.fsPath}`);
+        return;
+      }
+      if (!stat.isFile()) {
+        vscode.window.showWarningMessage(
+          i18n['warn.notAFile'] ?? 'Please select a file, not a folder.'
+        );
+        return;
+      }
+
       const content = fs.readFileSync(fileUri.fsPath, 'utf8');
       const parsed  = parseConflicts(content);
 
