@@ -40,5 +40,10 @@
   "sidebar.openFileManual": "手動開啟含標記的檔案…",
   "sidebar.conflictCount": "{count} 個衝突",
   "sidebar.conflictCountPlural": "{count} 個衝突",
-  "warn.notAFile": "請選擇檔案，而非資料夾。"
+  "warn.notAFile": "請選擇檔案，而非資料夾。",
+  "confirm.commitMerge": "將 '{from}' 的變更合併到 '{into}'？",
+  "btn.commit": "合併",
+  "btn.editMessage": "編輯訊息…",
+  "prompt.editMessage": "提交訊息",
+  "warn.emptyMessage": "提交訊息不能為空。"
 }

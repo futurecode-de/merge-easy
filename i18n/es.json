@@ -40,5 +40,10 @@
   "sidebar.openFileManual": "Abrir archivo con marcadores manualmente…",
   "sidebar.conflictCount": "{count} conflicto",
   "sidebar.conflictCountPlural": "{count} conflictos",
-  "warn.notAFile": "Seleccione un archivo, no una carpeta."
+  "warn.notAFile": "Seleccione un archivo, no una carpeta.",
+  "confirm.commitMerge": "¿Fusionar los cambios de '{from}' en '{into}'?",
+  "btn.commit": "Fusionar",
+  "btn.editMessage": "Editar mensaje…",
+  "prompt.editMessage": "Mensaje del commit",
+  "warn.emptyMessage": "El mensaje del commit no puede estar vacío."
 }

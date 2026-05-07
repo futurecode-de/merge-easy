@@ -40,5 +40,10 @@
   "sidebar.openFileManual": "Datei mit Markern manuell öffnen…",
   "sidebar.conflictCount": "{count} Konflikt",
   "sidebar.conflictCountPlural": "{count} Konflikte",
-  "warn.notAFile": "Bitte eine Datei auswählen, keinen Ordner."
+  "warn.notAFile": "Bitte eine Datei auswählen, keinen Ordner.",
+  "confirm.commitMerge": "Sollen die Änderungen aus '{from}' in '{into}' gemergt werden?",
+  "btn.commit": "Mergen",
+  "btn.editMessage": "Nachricht bearbeiten…",
+  "prompt.editMessage": "Commit-Nachricht",
+  "warn.emptyMessage": "Commit-Nachricht darf nicht leer sein."
 }

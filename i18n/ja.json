@@ -40,5 +40,10 @@
   "sidebar.openFileManual": "マーカー付きファイルを手動で開く…",
   "sidebar.conflictCount": "{count} 件の競合",
   "sidebar.conflictCountPlural": "{count} 件の競合",
-  "warn.notAFile": "フォルダではなくファイルを選択してください。"
+  "warn.notAFile": "フォルダではなくファイルを選択してください。",
+  "confirm.commitMerge": "'{from}' の変更を '{into}' にマージしますか？",
+  "btn.commit": "マージ",
+  "btn.editMessage": "メッセージを編集…",
+  "prompt.editMessage": "コミットメッセージ",
+  "warn.emptyMessage": "コミットメッセージは空にできません。"
 }

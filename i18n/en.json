@@ -40,5 +40,10 @@
   "sidebar.openFileManual": "Open file with markers manually…",
   "sidebar.conflictCount": "{count} conflict",
   "sidebar.conflictCountPlural": "{count} conflicts",
-  "warn.notAFile": "Please select a file, not a folder."
+  "warn.notAFile": "Please select a file, not a folder.",
+  "confirm.commitMerge": "Merge changes from '{from}' into '{into}'?",
+  "btn.commit": "Commit",
+  "btn.editMessage": "Edit message…",
+  "prompt.editMessage": "Commit message",
+  "warn.emptyMessage": "Commit message cannot be empty."
 }

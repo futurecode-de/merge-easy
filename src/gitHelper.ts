@@ -86,6 +86,13 @@ export async function commitMerge(repoRoot: string): Promise<void> {
 }
 
 /**
+ * Finalize a merge with a custom one-line commit message.
+ */
+export async function commitMergeWithMessage(repoRoot: string, message: string): Promise<void> {
+  await execFileAsync('git', ['-C', repoRoot, 'commit', '-m', message]);
+}
+
+/**
  * List absolute paths of files in a git repo that are currently in a merge
  * conflict state (any of UU/AA/DD/AU/UA/DU/UD status codes from `git status`).
  * Returns an empty array on any failure — caller decides how to handle.

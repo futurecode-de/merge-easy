@@ -15,9 +15,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parseConflicts } from './conflictParser';
 import { MergePanel } from './mergePanel';
-import { getI18n } from './i18n';
+import { getI18n, ti } from './i18n';
 import { ConflictsViewProvider } from './conflictsView';
-import { commitMerge, findRepoRoot } from './gitHelper';
+import { commitMerge, commitMergeWithMessage, findRepoRoot, getGitInfo } from './gitHelper';
 
 // Track which files we've already shown the one-time notification for
 const shownNotifications = new Set<string>();
@@ -221,8 +221,55 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.showWarningMessage('No active merge found in this workspace.');
         return;
       }
+
+      // Resolve branch names so the confirmation can name them.
+      const info = await getGitInfo(path.join(mergingRepo, '.placeholder'));
+      const intoBranch = info?.currentBranch ?? 'HEAD';
+      const fromBranch = info?.mergeHead ?? 'incoming';
+
+      const confirmMsg = ti(i18n, 'confirm.commitMerge', { from: fromBranch, into: intoBranch });
+      const btnCommit  = i18n['btn.commit']       ?? 'Commit';
+      const btnEdit    = i18n['btn.editMessage']  ?? 'Edit message…';
+
+      const choice = await vscode.window.showWarningMessage(
+        confirmMsg,
+        { modal: true },
+        btnCommit,
+        btnEdit
+      );
+      if (!choice) { return; } // user cancelled
+
+      let customMessage: string | undefined;
+      if (choice === btnEdit) {
+        // Pre-fill with the first line of git's prepared MERGE_MSG.
+        const mergeMsgPath = path.join(mergingRepo, '.git', 'MERGE_MSG');
+        let prefilled = `Merge branch '${fromBranch}' into ${intoBranch}`;
+        try {
+          const content = fs.readFileSync(mergeMsgPath, 'utf8').trim();
+          const firstLine = content.split('\n').find(l => l.trim().length > 0);
+          if (firstLine) { prefilled = firstLine; }
+        } catch { /* keep default */ }
+
+        const message = await vscode.window.showInputBox({
+          prompt: i18n['prompt.editMessage'] ?? 'Commit message',
+          value: prefilled,
+        });
+        if (message === undefined) { return; } // user cancelled the input
+        if (message.trim().length === 0) {
+          vscode.window.showWarningMessage(
+            i18n['warn.emptyMessage'] ?? 'Commit message cannot be empty.'
+          );
+          return;
+        }
+        customMessage = message;
+      }
+
       try {
-        await commitMerge(mergingRepo);
+        if (customMessage !== undefined) {
+          await commitMergeWithMessage(mergingRepo, customMessage);
+        } else {
+          await commitMerge(mergingRepo);
+        }
         vscode.window.showInformationMessage(
           `✓ Merge committed in ${path.basename(mergingRepo)}`
         );
