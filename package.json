@@ -24,7 +24,10 @@
     "Other",
     "SCM Providers"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:mergeEasy.conflictsView",
+    "workspaceContains:.git"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -32,6 +35,40 @@
         "command": "intellij-merge.openMergeEditor",
         "title": "%command.openMergeEditor%",
         "icon": "$(git-merge)"
+      },
+      {
+        "command": "mergeEasy.refreshConflicts",
+        "title": "Refresh",
+        "category": "Merge Easy",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mergeEasy.openFileManual",
+        "title": "Open file with markers manually…",
+        "category": "Merge Easy"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mergeEasy",
+          "title": "Merge Easy",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "mergeEasy": [
+        {
+          "id": "mergeEasy.conflictsView",
+          "name": "Merge Conflicts"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "mergeEasy.conflictsView",
+        "contents": "No merge conflicts found.\n[Refresh](command:mergeEasy.refreshConflicts)\n[Open file with markers manually…](command:mergeEasy.openFileManual)"
       }
     ],
     "menus": {
@@ -54,6 +91,13 @@
           "command": "intellij-merge.openMergeEditor",
           "when": "resourceScheme == file && !explorerResourceIsFolder",
           "group": "1_modification"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "mergeEasy.refreshConflicts",
+          "when": "view == mergeEasy.conflictsView",
+          "group": "navigation"
         }
       ]
     }
