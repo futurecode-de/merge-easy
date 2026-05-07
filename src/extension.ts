@@ -15,6 +15,7 @@ import * as fs from 'fs';
 import { parseConflicts } from './conflictParser';
 import { MergePanel } from './mergePanel';
 import { getI18n } from './i18n';
+import { ConflictsViewProvider } from './conflictsView';
 
 // Track which files we've already shown the one-time notification for
 const shownNotifications = new Set<string>();
@@ -168,6 +169,42 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     })
   );
+
+  // ── 5. Activity-Bar sidebar: list of files with merge conflicts ──────────
+  const conflictsProvider = new ConflictsViewProvider(context);
+  const conflictsTreeView = vscode.window.createTreeView('mergeEasy.conflictsView', {
+    treeDataProvider: conflictsProvider,
+    showCollapseAll: false,
+  });
+  context.subscriptions.push(conflictsTreeView);
+  context.subscriptions.push({ dispose: () => conflictsProvider.dispose() });
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mergeEasy.refreshConflicts', () => {
+      conflictsProvider.refresh();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('mergeEasy.openFileManual', async () => {
+      const picks = await vscode.window.showOpenDialog({
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false,
+        openLabel: 'Open in Merge Easy',
+      });
+      if (!picks || picks.length === 0) { return; }
+      await vscode.commands.executeCommand('intellij-merge.openMergeEditor', picks[0]);
+    })
+  );
+
+  // Refresh the view when files in the workspace change (catches edits that
+  // resolve conflicts outside of git's awareness — e.g. saved without `git add`).
+  const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*');
+  fsWatcher.onDidChange(() => conflictsProvider.refresh());
+  fsWatcher.onDidCreate(() => conflictsProvider.refresh());
+  fsWatcher.onDidDelete(() => conflictsProvider.refresh());
+  context.subscriptions.push(fsWatcher);
 
   // ── Run checks on the file that is already open at activation time ────────
   updateStatusBar(vscode.window.activeTextEditor);
