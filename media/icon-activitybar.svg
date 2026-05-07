@@ -4,6 +4,9 @@
      currentColor with opacity variation so VSCode can theme it. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"
      fill="currentColor">
+  <!-- Rounded frame (stroke instead of fill so VSCode's themed bg shows through) -->
+  <rect x="2" y="2" width="124" height="124" rx="18"
+        fill="none" stroke="currentColor" stroke-width="4" opacity=".5"/>
   <!-- LOCAL panel -->
   <rect width="28" height="92" x="7"  y="18" rx="5" opacity=".55"/>
   <rect width="28" height="22" x="7"  y="38"        opacity="1"/>
